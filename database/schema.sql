@@ -39,8 +39,10 @@ CREATE TABLE river_sungai(
 CREATE TABLE river_sensorNode(
     id INT AUTO_INCREMENT PRIMARY KEY,
     idSungai INT,
+    idStation INT UNIQUE NOT NULL,
     namaNode VARCHAR(50) NOT NULL,
     posisi ENUM('hulu', 'hilir') NOT NULL,
+    elevasi FLOAT NOT NULL DEFAULT 0.0,
     FOREIGN KEY (idSungai) REFERENCES river_sungai(id),
     INDEX idx_river_node_sungai (idSungai)
 );
@@ -49,8 +51,12 @@ CREATE TABLE river_sensorReading(
     id INT AUTO_INCREMENT PRIMARY KEY,
     idNode INT,
     tinggiAir FLOAT NOT NULL,
-    curahHujan FLOAT NOT NULL,
     kelembapanTanah FLOAT NOT NULL,
+    curahHujan FLOAT NOT NULL,
+    suhuRataRata FLOAT NOT NULL,
+    kelembapanUdara FLOAT NOT NULL,
+    kecepatanAngin FLOAT NOT NULL,
+    arahAngin VARCHAR(10),
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idNode) REFERENCES river_sensorNode(id),
     INDEX idx_river_reading_node (idNode),
@@ -113,5 +119,6 @@ CREATE USER IF NOT EXISTS 'analytics'@'%' IDENTIFIED BY 'AnalyticSecret';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.analytics_peringatan TO 'analytics'@'%';
 GRANT SELECT ON kelompok2.river_sungai TO 'analytics'@'%';
 GRANT SELECT ON kelompok2.river_sensorReading TO 'analytics'@'%';
+GRANT SELECT ON kelompok2.river_sensorNode TO 'analytics'@'%';
 
 FLUSH PRIVILEGES;
