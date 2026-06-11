@@ -44,7 +44,8 @@ CREATE TABLE river_sensorNode(
     posisi ENUM('hulu', 'hilir') NOT NULL,
     elevasi FLOAT NOT NULL DEFAULT 0.0,
     FOREIGN KEY (idSungai) REFERENCES river_sungai(id),
-    INDEX idx_river_node_sungai (idSungai)
+    INDEX idx_river_node_sungai (idSungai),
+    INDEX idx_river_node_station (idStation)
 );
 
 CREATE TABLE river_sensorReading(
@@ -68,7 +69,8 @@ CREATE TABLE user_user(
     id INT AUTO_INCREMENT PRIMARY KEY,
     nama VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'pengguna') DEFAULT 'pengguna'
+    role ENUM('admin', 'pengguna') DEFAULT 'pengguna',
+    INDEX idx_user_id (id)
 );
 
 CREATE TABLE user_laporan(
