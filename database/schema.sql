@@ -122,5 +122,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.analytics_peringatan TO 'analy
 GRANT SELECT ON kelompok2.river_sungai TO 'analytics'@'%';
 GRANT SELECT ON kelompok2.river_sensorReading TO 'analytics'@'%';
 GRANT SELECT ON kelompok2.river_sensorNode TO 'analytics'@'%';
+GRANT INSERT ON kelompok2.user_riwayatBanjir TO 'analytics'@'%';
 
 FLUSH PRIVILEGES;
