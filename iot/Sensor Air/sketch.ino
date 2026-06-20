@@ -38,8 +38,8 @@ void publishSensorData() {
 
   StaticJsonDocument<300> doc;
   doc["idNode"] = 1;
-  doc["WaterLevel_m"] = waterLevel_m;
-  doc["SoilMoisture_pct"] = soilMoisture_pct;
+  doc["tinggiAir"] = waterLevel_m;
+  doc["kelembapanTanah"] = soilMoisture_pct;
 
   char payload[300];
   serializeJson(doc, payload);

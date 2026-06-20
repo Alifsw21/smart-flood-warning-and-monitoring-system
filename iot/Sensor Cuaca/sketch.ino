@@ -37,15 +37,15 @@ void publishSensorData() {
 
   StaticJsonDocument<1024> doc; 
   doc["idNode"] = 2;
-  doc["Rainfall_mm"] = rainfall;
-  doc["Tn"] = tn;
-  doc["Tx"] = tx;
-  doc["Tavg"] = t_avg;
-  doc["RH_avg"] = rh_avg;
-  doc["ss"] = ss;
-  doc["ff_x"] = ff_x;
-  doc["ddd_x"] = ddd_x;
-  doc["ff_avg"] = ff_avg;
+  doc["curahHujan"] = rainfall;
+  doc["suhuMin"] = tn;
+  doc["suhuMax"] = tx;
+  doc["suhuRataRata"] = t_avg;
+  doc["kelembapanUdara"] = rh_avg;
+  doc["sunShine"] = ss;
+  doc["kecepatanAngin"] = ff_x;
+  doc["arahAngin"] = ddd_x;
+  doc["kecepatanRataRataAngin"] = ff_avg;
 
   char payload[1024];
   serializeJson(doc, payload);
