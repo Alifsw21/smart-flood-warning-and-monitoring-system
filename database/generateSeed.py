@@ -50,7 +50,7 @@ def generate():
             nama = f"{random.choice(NAMA_DEPAN)} {random.choice(NAMA_BELAKANG)}"
             password_dummy = "$2y$10$dummyhashpassword12345678"
             role = 'admin' if i == 1 else 'pengguna'
-            f.write(f"INSERT INTO user_user (id, nama, password, role) VALUES ({i}, '{nama}', '{password_dummy}', '{role}');\n")
+            f.write(f"INSERT INTO user_user (id, username, password, role) VALUES ({i}, '{nama}', '{password_dummy}', '{role}');\n")
         f.write("\n")
 
         f.write("-- 5. Data Laporan\n")

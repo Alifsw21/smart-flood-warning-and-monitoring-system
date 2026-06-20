@@ -67,7 +67,7 @@ CREATE TABLE river_sensorReading(
 # 3. php-user
 CREATE TABLE user_user(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nama VARCHAR(100) NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'pengguna') DEFAULT 'pengguna',
     INDEX idx_user_id (id)
