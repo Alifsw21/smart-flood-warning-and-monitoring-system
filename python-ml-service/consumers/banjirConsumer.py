@@ -7,7 +7,7 @@ import mysql.connector
 import numpy as np
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6700, decode_responses=True)
+    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -24,24 +24,34 @@ def get_mysql_connection():
         print(f"Gagal koneksi ke database: {str(e)}")
         return None
     
-model1 = joblib.load("models/deteksi_banjir_berdasarkan_waterLevel.pkl")
-model2 = joblib.load("models/deteksi_banjir_berdasarkan_cuaca.pkl")
+model1 = joblib.load("../models/deteksi_banjir_berdasarkan_waterLevel.pkl")
+model2 = joblib.load("../models/deteksi_banjir_berdasarkan_cuaca.pkl")
 
 class SensorPrediksiBanjir(BaseModel):
     idSungai: int
-    Rainfall_mm: float = 0.0
-    WaterLevel_m: float = 0.0
-    SoilMoisture_pct: float = 0.0
-    Tn: float = 25.0 # Min temperature
-    Tx: float = 32.0 # Max temperature
-    Tavg: float = 28.0 # Avg temperature
-    RH_avg: float = 77.0 # Avg humidity
-    ss: float = 0.0 # duration of sunshine
-    ff_x: float = 0.0 # max wind speed
-    ddd_x: float = 0.0 # wind direction at maximum speed
-    ff_avg: float = 0.0 # max wind speed
+    curahHujan: float = 0.0 # Rainfall_mm
+    tinggiAir: float = 0.0 # WaterLevel_m
+    kelembapanTanah: float = 0.0 # SoilMoisture_pct 
+    suhuMin: float = 25.0 # Tn
+    suhuMax: float = 32.0 # Tx
+    suhuRataRata: float = 28.0 # Tavg
+    kelembapanUdara: float = 77.0 # RH_avg
+    sunShine: float = 0.0 # ss
+    kecepatanAngin: float = 0.0 # ff_x
+    arahAngin: float = 0.0 # ddd_x
+    kecepatanRataRataAngin: float = 0.0 # ff_avg
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+kredensial = pika.PlainCredentials('guest', 'guest')
+
+parameter = pika.ConnectionParameters(
+    host='127.0.0.1',
+    port=5672,
+    virtual_host='/',
+    credentials=kredensial
+)
+
+connection = pika.BlockingConnection(parameter)
+
 channel = connection.channel()
 channel.queue_declare(queue='banjir_queue')
 
@@ -55,8 +65,8 @@ def callback(ch, method, properties, body):
         raw_data = json.loads(body)
         data = SensorPrediksiBanjir(**raw_data)
 
-        input_m1 = np.array([[data.Rainfall_mm, data.WaterLevel_m, data.SoilMoisture_pct]])
-        input_m2 = np.array([[data.Tn, data.Tx, data.Tavg, data.RH_avg, data.ss, data.ff_x, data.ddd_x, data.ff_avg]])
+        input_m1 = np.array([[data.curahHujan, data.tinggiAir, data.kelembapanTanah]])
+        input_m2 = np.array([[data.suhuMin, data.suhuMax, data.suhuRataRata, data.kelembapanUdara, data.sunShine, data.kecepatanAngin, data.arahAngin, data.kecepatanRataRataAngin]])
 
         prob_m1 = model1.predict_proba(input_m1)[0][1]
         prob_m2 = model2.predict_proba(input_m2)[0][1]
@@ -100,9 +110,9 @@ def callback(ch, method, properties, body):
             db_conn.commit()
 
             if prediksi in ["WASPADA", "BENCANA"]:
-                if data.WaterLevel_m >= 3.5:
+                if data.tinggiAir >= 3.5:
                     status_riwayat = "tinggi"
-                elif data.WaterLevel_m >= 2.0:
+                elif data.tinggiAir >= 2.0:
                     status_riwayat = "sedang"
                 else:
                     status_riwayat = "ringan"
@@ -111,7 +121,7 @@ def callback(ch, method, properties, body):
                     INSERT INTO user_riwayatBanjir (idSungai, tinggiAir, status)
                     VALUES (%s, %s, %s)
                 """
-                values_riwayat = (data.idSungai, data.WaterLevel_m, status_riwayat)
+                values_riwayat = (data.idSungai, data.tinggiAir, status_riwayat)
                 cursor.execute(query_riwayat, values_riwayat)
                 db_conn.commit()
 

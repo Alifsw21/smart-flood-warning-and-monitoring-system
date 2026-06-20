@@ -7,7 +7,7 @@ import mysql.connector
 import joblib
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6700, decode_responses=True)
+    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -24,22 +24,32 @@ def get_mysql_connection():
         print(f"Gagal koneksi ke database: {str(e)}")
         return None
 
-model = joblib.load("models/prediksi_curah_hujan.pkl")
+model = joblib.load("../models/prediksi_curah_hujan.pkl")
 
 class SensorReading(BaseModel):
     idNode: int
-    tinggiAir: float
-    kelembapanTanah: float
-    Tn: float
-    Tx: float
-    Tavg: float
-    RH_avg: float
-    ss: float
-    ff_x: float
-    ddd_x: float
-    ff_avg: float
+    tinggiAir: float # WaterLevel_m
+    kelembapanTanah: float # SoilMoisture_pct
+    suhuMin: float # Tn
+    suhuMax: float # Tx
+    suhuRataRata: float # Tavg
+    kelembapanUdara: float # RH_avg
+    sunShine: float # ss
+    kecepatanAngin: float # ff_x
+    arahAngin: float # ddd_x
+    kecepatanRataRataAngin: float # ff_avg
 
-connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+kredensial = pika.PlainCredentials('guest', 'guest')
+
+parameter = pika.ConnectionParameters(
+    host='127.0.0.1',
+    port=5672,
+    virtual_host='/',
+    credentials=kredensial
+)
+
+connection = pika.BlockingConnection(parameter)
+
 channel = connection.channel()
 channel.queue_declare(queue='sensor_queue')
 
@@ -52,7 +62,7 @@ def callback(ch, method, properties, body):
         raw_data = json.loads(body)
         data = SensorReading(**raw_data)
 
-        input = np.array([[data.Tn, data.Tx, data.Tavg, data.RH_avg, data.ss, data.ff_x, data.ddd_x, data.ff_avg]])
+        input = np.array([[data.suhuMin, data.suhuMax, data.suhuRataRata, data.kelembapanUdara, data.sunShine, data.kecepatanAngin, data.arahAngin, data.kecepatanRataRataAngin]])
 
         prediction = float(model.predict(input)[0])
         prediction = max(0.0, prediction)
@@ -94,10 +104,10 @@ def callback(ch, method, properties, body):
                 data.tinggiAir,
                 data.kelembapanTanah,
                 round(prediction, 2),
-                data.Tavg,
-                data.RH_avg,
-                data.ff_avg,
-                str(data.ddd_x)
+                data.suhuRataRata,
+                data.kelembapanUdara,
+                data.kecepatanRataRataAngin,
+                str(data.arahAngin)
             )
 
             cursor.execute(query, values)

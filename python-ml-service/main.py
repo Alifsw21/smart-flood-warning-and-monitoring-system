@@ -7,7 +7,7 @@ import json
 import pika
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6700, decode_responses=True)
+    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -15,7 +15,13 @@ except Exception:
 latest_data = {"Node1": None, "Node2": None}
 
 def start_background_worker():
-    rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
+    rmq_credentials = pika.PlainCredentials('guest', 'guest')
+    rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(
+        host='127.0.0.1',
+        port=5672,
+        virtual_host='/',
+        credentials=rmq_credentials
+    ))
     rmq_channel = rmq_conn.channel()
     rmq_channel.queue_declare(queue='sensor_queue')
     rmq_channel.queue_declare(queue='banjir_queue')
@@ -38,8 +44,9 @@ def start_background_worker():
             gabung = {**latest_data["Node1"], **latest_data["Node2"]}
 
             try:
+                gabung["idNode"] = latest_data["Node1"].get("idNode", 1)
                 banjir_payload = gabung.copy()
-                banjir_payload['idSungai'] = gabung.get("idNode", 1)
+                banjir_payload['idSungai'] = gabung["idNode"]
 
                 rmq_channel.basic_publish(exchange='', routing_key='banjir_queue', body=json.dumps(banjir_payload))
                 rmq_channel.basic_publish(exchange='', routing_key='sensor_queue', body=json.dumps(gabung))
