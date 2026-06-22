@@ -1,0 +1,30 @@
+<?php
+
+require_once __DIR__.'/../config/database.php';
+require_once __DIR__.'/../controllers/FloodHistoryController.php';
+
+$controller = new FloodHistoryController($pdo);
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+$uri = parse_url(
+    $_SERVER['REQUEST_URI'],
+    PHP_URL_PATH
+);
+
+$segments = explode('/', trim($uri, '/'));
+
+if ($segments[0] == 'flood-history') {
+
+    if ($method == 'GET' && count($segments) == 1) {
+        $controller->index();
+    }
+
+    elseif ($method == 'GET' && count($segments) == 2) {
+        $controller->show($segments[1]);
+    }
+
+    elseif ($method == 'DELETE' && count($segments) == 2) {
+        $controller->destroy($segments[1]);
+    }
+}
