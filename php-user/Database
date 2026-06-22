@@ -1,0 +1,10 @@
+CREATE TABLE flood_histories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    river_name VARCHAR(100),
+    zone_name VARCHAR(100),
+    water_level FLOAT,
+    status VARCHAR(20),
+    description TEXT,
+    flood_date DATETIME,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
