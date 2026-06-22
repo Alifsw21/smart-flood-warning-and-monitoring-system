@@ -1,0 +1,12 @@
+GET /api/flood-history
+
+JSON
+[
+  {
+    "id": 1,
+    "lokasi": "Daerah 1",
+    "status": "Bahaya",
+    "ketinggian_air": 250,
+    "tanggal": "2026-06-20"
+  }
+]
