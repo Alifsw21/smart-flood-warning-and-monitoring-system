@@ -1,5 +1,0 @@
-INSERT INTO flood_histories
-(river_name, zone_name, water_level, status, description, flood_date)
-VALUES
-('Daerah A','Zona A',250,'Bahaya','Debit air tinggi','2026-06-15 10:00:00'),
-('Daerah B','Zona B',180,'Siaga','Curah hujan meningkat','2026-06-16 12:00:00');
