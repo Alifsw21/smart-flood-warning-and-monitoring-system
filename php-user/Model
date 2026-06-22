@@ -1,0 +1,43 @@
+<?php
+
+class FloodHistory
+{
+    private $db;
+
+    public function __construct($db)
+    {
+        $this->db = $db;
+    }
+
+    public function getAll()
+    {
+        $stmt = $this->db->query(
+            "SELECT * FROM flood_histories
+             ORDER BY flood_date DESC"
+        );
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getById($id)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM flood_histories
+             WHERE id = ?"
+        );
+
+        $stmt->execute([$id]);
+
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function delete($id)
+    {
+        $stmt = $this->db->prepare(
+            "DELETE FROM flood_histories
+             WHERE id = ?"
+        );
+
+        return $stmt->execute([$id]);
+    }
+}
