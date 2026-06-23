@@ -20,6 +20,7 @@ function authenticateJWT(req, res, next) {
 
     if (!authHeader) {
         return res.status(401).json({
+            status: 'error',
             message: 'Token tidak ditemukan'
         });
     }
@@ -33,6 +34,7 @@ function authenticateJWT(req, res, next) {
 
             if (err) {
                 return res.status(403).json({
+                    status: 'error',
                     message: 'Token tidak valid'
                 });
             }
@@ -56,12 +58,27 @@ router.post('/login', async (req, res) => {
 
         const { username, password } = req.body;
 
-        const user = User.findByUsername(username);
+        if (!username || !password) {
+
+            return res.status(400).json({
+                status: 'error',
+                message: 'Username dan password wajib diisi'
+            });
+
+        }
+
+        const user =
+            await User.findByUsername(
+                username
+            );
 
         if (!user) {
+
             return res.status(401).json({
-                message: 'Username atau Password salah'
+                status: 'error',
+                message: 'Username atau password salah'
             });
+
         }
 
         const validPassword =
@@ -73,7 +90,8 @@ router.post('/login', async (req, res) => {
         if (!validPassword) {
 
             return res.status(401).json({
-                message: 'Username atau Password salah'
+                status: 'error',
+                message: 'Username atau password salah'
             });
 
         }
@@ -89,16 +107,20 @@ router.post('/login', async (req, res) => {
             }
         );
 
-        res.json({
+        return res.json({
             status: 'success',
             token,
-            role: user.role,
-            username: user.username
+            id: user.id,
+            username: user.username,
+            role: user.role
         });
 
     } catch (error) {
 
-        res.status(500).json({
+        console.error(error);
+
+        return res.status(500).json({
+            status: 'error',
             message: error.message
         });
 
@@ -140,30 +162,46 @@ router.get(
             failureRedirect: '/'
         }
     ),
-    (req, res) => {
+    async (req, res) => {
 
-        const token = jwt.sign(
-            {
-                id: req.user.id,
-                role: req.user.role
-            },
-            config.JWT_SECRET,
-            {
-                expiresIn: '24h'
-            }
-        );
+        try {
 
-        const redirectUrl =
-            `${config.PHP_CALLBACK_URL}?token=${token}&role=${req.user.role}`;
+            const token = jwt.sign(
+                {
+                    id: req.user.id,
+                    role: req.user.role
+                },
+                config.JWT_SECRET,
+                {
+                    expiresIn: '24h'
+                }
+            );
 
-        res.redirect(redirectUrl);
+            const redirectUrl =
+                `${config.PHP_CALLBACK_URL}` +
+                `?token=${token}` +
+                `&role=${req.user.role}` +
+                `&username=${encodeURIComponent(req.user.username)}`;
+
+            return res.redirect(
+                redirectUrl
+            );
+
+        } catch (error) {
+
+            return res.status(500).json({
+                status: 'error',
+                message: error.message
+            });
+
+        }
 
     }
 );
 
 /*
 ==================================
-PROFILE TEST
+PROFILE
 ==================================
 */
 
@@ -172,7 +210,7 @@ router.get(
     authenticateJWT,
     (req, res) => {
 
-        res.json({
+        return res.json({
             status: 'success',
             user: req.user
         });
