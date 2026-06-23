@@ -1,26 +1,34 @@
-const bcrypt = require('bcryptjs');
+const db = require('../database');
 
-const users = [
-    {
-        id: 1,
-        username: 'admin',
-        password: bcrypt.hashSync('admin123', 10),
-        role: 'admin'
-    },
-    {
-        id: 2,
-        username: 'user',
-        password: bcrypt.hashSync('user123', 10),
-        role: 'user'
-    }
-];
+async function findByUsername(username) {
 
-function findByUsername(username) {
-    return users.find(
-        user => user.username === username
+    const [rows] = await db.execute(
+        `
+        SELECT *
+        FROM auth_user
+        WHERE username = ?
+        `,
+        [username]
     );
+
+    return rows[0];
+}
+
+async function findByEmail(email) {
+
+    const [rows] = await db.execute(
+        `
+        SELECT *
+        FROM auth_user
+        WHERE email = ?
+        `,
+        [email]
+    );
+
+    return rows[0];
 }
 
 module.exports = {
-    findByUsername
+    findByUsername,
+    findByEmail
 };
