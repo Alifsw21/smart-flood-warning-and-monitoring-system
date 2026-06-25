@@ -1,13 +1,28 @@
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
 import threading
 import redis
 import json
 import pika
+import os
+
+load_dotenv()
+
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "127.0.0.1")
+RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
+RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.environ.get("RABBITMQ_VHOST", "/")
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+MQTT_HOST = os.environ.get("MQTT_HOST", "broker.hivemq.com")
+MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
+MQTT_TOPIC_PREFIX = os.environ.get("MQTT_TOPIC_PREFIX", "kelompok2/sensors").rstrip("/")
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -15,11 +30,11 @@ except Exception:
 latest_data = {"Node1": None, "Node2": None}
 
 def start_background_worker():
-    rmq_credentials = pika.PlainCredentials('guest', 'guest')
+    rmq_credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
     rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(
-        host='127.0.0.1',
-        port=5672,
-        virtual_host='/',
+        host=RABBITMQ_HOST,
+        port=RABBITMQ_PORT,
+        virtual_host=RABBITMQ_VHOST,
         credentials=rmq_credentials
     ))
     rmq_channel = rmq_conn.channel()
@@ -28,8 +43,8 @@ def start_background_worker():
 
     def on_connect(client, userdata, flags, rc):
         print(f"Terhubung ke HiveMQ dengan kode: {rc}")
-        client.subscribe("kelompok2/sensors/sungai")
-        client.subscribe("kelompok2/sensors/cuaca")
+        client.subscribe(f"{MQTT_TOPIC_PREFIX}/sungai")
+        client.subscribe(f"{MQTT_TOPIC_PREFIX}/cuaca")
 
     def on_message(client, userdata, msg):
         global latest_data
@@ -56,10 +71,10 @@ def start_background_worker():
             except Exception as e:
                 print(f"Gagal mengirim ke antrean: {str(e)}")
 
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.on_message = on_message
-    client.connect("broker.hivemq.com", 1883, 60)
+    client.connect(MQTT_HOST, MQTT_PORT, 60)
     client.loop_forever()
 
 @asynccontextmanager

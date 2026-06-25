@@ -1,13 +1,29 @@
 from pydantic import BaseModel
+from dotenv import load_dotenv
 import pika
 import json
 import redis
 import numpy as np
 import mysql.connector
 import joblib
+import os
+
+load_dotenv()
+
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
+RIVER_DB_USER = os.environ.get("RIVER_DB_USER", "river")
+RIVER_DB_PASSWORD = os.environ.get("RIVER_DB_PASSWORD", "RiverSecret")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "kelompok2")
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "127.0.0.1")
+RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
+RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.environ.get("RABBITMQ_VHOST", "/")
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -15,16 +31,16 @@ except Exception:
 def get_mysql_connection():
     try:
         return mysql.connector.connect(
-            host="localhost",
-            user="river",
-            password="RiverSecret",
-            database="kelompok2"
+            host=MYSQL_HOST,
+            user=RIVER_DB_USER,
+            password=RIVER_DB_PASSWORD,
+            database=MYSQL_DATABASE
         )
     except Exception as e:
         print(f"Gagal koneksi ke database: {str(e)}")
         return None
 
-model = joblib.load("../models/prediksi_curah_hujan.pkl")
+model = joblib.load(os.path.join(os.path.dirname(__file__), '..', 'models', 'prediksi_curah_hujan.pkl'))
 
 class SensorReading(BaseModel):
     idNode: int
@@ -39,12 +55,12 @@ class SensorReading(BaseModel):
     arahAngin: float # ddd_x
     kecepatanRataRataAngin: float # ff_avg
 
-kredensial = pika.PlainCredentials('guest', 'guest')
+kredensial = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
 
 parameter = pika.ConnectionParameters(
-    host='127.0.0.1',
-    port=5672,
-    virtual_host='/',
+    host=RABBITMQ_HOST,
+    port=RABBITMQ_PORT,
+    virtual_host=RABBITMQ_VHOST,
     credentials=kredensial
 )
 
