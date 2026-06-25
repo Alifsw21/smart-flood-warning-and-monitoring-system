@@ -1,0 +1,5 @@
+outs:
+- md5: 907ed1e605a945147598da9a0d501c72
+  size: 463657
+  hash: md5
+  path: deteksi_banjir_berdasarkan_waterLevel.pkl
