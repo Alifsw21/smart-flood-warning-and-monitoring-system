@@ -3,7 +3,6 @@ CREATE DATABASE IF NOT EXISTS kelompok2;
 USE kelompok2;
 
 # 1. Auth Service
-
 CREATE TABLE auth_oauthClient(
     id INT AUTO_INCREMENT PRIMARY KEY,
     client_id VARCHAR(80) UNIQUE NOT NULL,
@@ -78,9 +77,14 @@ CREATE TABLE river_sensorReading(
 CREATE TABLE user_user(
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(150) UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'pengguna') DEFAULT 'pengguna',
-    INDEX idx_user_id (id)
+    role ENUM('admin', 'user') DEFAULT 'user',
+    provider ENUM('local', 'google') DEFAULT 'local',
+    waktuDibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_id (id),
+    INDEX idx_user_name (username),
+    INDEX idx_user_email (email)
 );
 
 CREATE TABLE user_laporan(
@@ -114,6 +118,11 @@ CREATE TABLE analytics_peringatan(
     INDEX idx_analytics_sungai (idSungai),
     INDEX idx_analytics_recorded (recorded_at)
 );
+
+CREATE USER IF NOT EXISTS 'auth'@'%' IDENTIFIED BY 'AuthSecret';
+GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.auth_oauthClient TO 'auth'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.auth_oauthToken TO 'auth'@'%';
+GRANT SELECT, INSERT ON kelompok2.user_user TO 'auth'@'%';
 
 CREATE USER IF NOT EXISTS 'river'@'%' IDENTIFIED BY 'RiverSecret';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.river_zones TO 'river'@'%';
