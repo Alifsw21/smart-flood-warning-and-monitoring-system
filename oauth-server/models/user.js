@@ -1,13 +1,8 @@
 const db = require('../database');
 
 async function findByUsername(username) {
-
     const [rows] = await db.execute(
-        `
-        SELECT *
-        FROM auth_user
-        WHERE username = ?
-        `,
+        'SELECT * FROM user_user WHERE username = ?',
         [username]
     );
 
@@ -15,20 +10,12 @@ async function findByUsername(username) {
 }
 
 async function findByEmail(email) {
-
     const [rows] = await db.execute(
-        `
-        SELECT *
-        FROM auth_user
-        WHERE email = ?
-        `,
+        'SELECT * FROM user_user WHERE email = ?',
         [email]
     );
 
     return rows[0];
 }
 
-module.exports = {
-    findByUsername,
-    findByEmail
-};
+module.exports = { findByUsername, findByEmail };
