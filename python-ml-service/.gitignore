@@ -1,3 +1,5 @@
-models/
+deteksi_banjir_berdasarkan_cuaca.pkl
+deteksi_banjir_berdasarkan_waterLevel.pkl
+prediksi_curah_hujan.pkl
 venv/
 __pycache__
