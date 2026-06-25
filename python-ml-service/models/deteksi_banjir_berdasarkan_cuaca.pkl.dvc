@@ -1,0 +1,5 @@
+outs:
+- md5: e9eb1f38c2de77e1bab84ee924545a8f
+  size: 6164937
+  hash: md5
+  path: deteksi_banjir_berdasarkan_cuaca.pkl

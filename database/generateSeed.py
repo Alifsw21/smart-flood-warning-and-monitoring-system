@@ -47,10 +47,15 @@ def generate():
 
         f.write("-- 4. Data Pengguna\n")
         for i in range(1, 51):
-            nama = f"{random.choice(NAMA_DEPAN)} {random.choice(NAMA_BELAKANG)}"
+            nama_depan = random.choice(NAMA_DEPAN).lower()
+            nama_belakang = random.choice(NAMA_BELAKANG).lower()
+            username = f"{nama_depan}{nama_belakang}"
+            email = f"{username}@kelompok2.com"
             password_dummy = "$2y$10$dummyhashpassword12345678"
             role = 'admin' if i == 1 else 'pengguna'
-            f.write(f"INSERT INTO user_user (id, username, password, role) VALUES ({i}, '{nama}', '{password_dummy}', '{role}');\n")
+            provider = 'local' if i == 1 else 'google'
+            waktu_acak = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
+            f.write(f"INSERT INTO user_user (id, username, email, password, role, provider, waktuDibuat) VALUES ({i}, '{username}', '{email}', '{password_dummy}', '{role}', '{provider}', '{waktu_acak});\n")
         f.write("\n")
 
         f.write("-- 5. Data Laporan\n")
