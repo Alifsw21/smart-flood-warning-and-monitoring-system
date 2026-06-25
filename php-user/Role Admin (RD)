@@ -1,6 +1,0 @@
-Read
-GET /api/flood-history
-GET /api/flood-history/(id)
-
-Delete
-DELETE /api/flood-history/(id)
