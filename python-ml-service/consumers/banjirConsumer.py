@@ -1,13 +1,29 @@
 from pydantic import BaseModel
+from dotenv import load_dotenv
 import pika
 import json
 import redis
 import joblib
 import mysql.connector
 import numpy as np
+import os
+
+load_dotenv()
+
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
+ANALYTICS_DB_USER = os.environ.get("ANALYTICS_DB_USER", "analytics")
+ANALYTICS_DB_PASSWORD = os.environ.get("ANALYTICS_DB_PASSWORD", "AnalyticSecret")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "kelompok2")
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "127.0.0.1")
+RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
+RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.environ.get("RABBITMQ_VHOST", "/")
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -15,17 +31,17 @@ except Exception:
 def get_mysql_connection():
     try:
         return mysql.connector.connect(
-            host="localhost",
-            user="analytics",
-            password="AnalyticSecret",
-            database="kelompok2"
+            host=MYSQL_HOST,
+            user=ANALYTICS_DB_USER,
+            password=ANALYTICS_DB_PASSWORD,
+            database=MYSQL_DATABASE
         )
     except Exception as e:
         print(f"Gagal koneksi ke database: {str(e)}")
         return None
     
-model1 = joblib.load("../models/deteksi_banjir_berdasarkan_waterLevel.pkl")
-model2 = joblib.load("../models/deteksi_banjir_berdasarkan_cuaca.pkl")
+model1 = joblib.load(os.path.join(os.path.dirname(__file__), '..', 'models', 'deteksi_banjir_berdasarkan_waterLevel.pkl'))
+model2 = joblib.load(os.path.join(os.path.dirname(__file__), '..', 'models', 'deteksi_banjir_berdasarkan_cuaca.pkl'))
 
 class SensorPrediksiBanjir(BaseModel):
     idSungai: int
@@ -41,12 +57,12 @@ class SensorPrediksiBanjir(BaseModel):
     arahAngin: float = 0.0 # ddd_x
     kecepatanRataRataAngin: float = 0.0 # ff_avg
 
-kredensial = pika.PlainCredentials('guest', 'guest')
+kredensial = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
 
 parameter = pika.ConnectionParameters(
-    host='127.0.0.1',
-    port=5672,
-    virtual_host='/',
+    host=RABBITMQ_HOST,
+    port=RABBITMQ_PORT,
+    virtual_host=RABBITMQ_VHOST,
     credentials=kredensial
 )
 

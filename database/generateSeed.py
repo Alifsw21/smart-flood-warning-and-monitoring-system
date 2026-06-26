@@ -49,13 +49,12 @@ def generate():
         for i in range(1, 51):
             nama_depan = random.choice(NAMA_DEPAN).lower()
             nama_belakang = random.choice(NAMA_BELAKANG).lower()
-            username = f"{nama_depan}{nama_belakang}"
+            username = f"{nama_depan}{nama_belakang}{i}"
             email = f"{username}@kelompok2.com"
             password_dummy = "$2y$10$dummyhashpassword12345678"
-            role = 'admin' if i == 1 else 'pengguna'
-            provider = 'local' if i == 1 else 'google'
+            role = 'admin' if i == 1 else 'user'
             waktu_acak = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
-            f.write(f"INSERT INTO user_user (id, username, email, password, role, provider, waktuDibuat) VALUES ({i}, '{username}', '{email}', '{password_dummy}', '{role}', '{provider}', '{waktu_acak});\n")
+            f.write(f"INSERT INTO user_user (id, username, email, password, role, waktuDibuat) VALUES ({i}, '{username}', '{email}', '{password_dummy}', '{role}', '{waktu_acak.strftime('%Y-%m-%d %H:%M:%S')}');\n")
         f.write("\n")
 
         f.write("-- 5. Data Laporan\n")
