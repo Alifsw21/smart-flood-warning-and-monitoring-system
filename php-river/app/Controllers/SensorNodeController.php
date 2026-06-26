@@ -1,6 +1,6 @@
 <?php
 namespace App\Controllers;
-use App\Models\SensorModel;
+use App\Models\SensorNode;
 
 class SensorController {
     private $model;
