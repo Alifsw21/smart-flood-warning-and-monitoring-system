@@ -1,32 +1,12 @@
 <?php
+
 namespace App\Models;
+
 use PDO;
 use PDOException;
 
-class SensorModel {
-    private $db;
-
-    public function __construct() {
-        $host = 'localhost';
-        $dbname = 'kelompok2';
-        $username = 'root';
-        $password = 'RootSecret';
-
-        try {
-            $this->db = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-            $this->db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        } catch (PDOException $e) {
-            http_response_Code(500);
-            echo json_encode([
-                "status" => "error",
-                "code" => 500,
-                "message" => "Database connection failed: " . $e->getMessage(),
-                "timestamp" => date('c'),
-                "service" => "php-river"
-            ]);
-            exit;
-        }
-    }
+class SensorNode extends BaseModel {
+    private $table = 'river_sensorNode';
 
     public function getLatestReadings() {
         $query = "SELECT n.id, n.idStation, n.namaNode, n.posisi, n.elevasi, s.lokasiSungai
@@ -54,7 +34,6 @@ class SensorModel {
             ]);
 
             return $this->db->lastInsertId();
-
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) { 
                 if (str_contains($e->getMessage(), '1062')) {
