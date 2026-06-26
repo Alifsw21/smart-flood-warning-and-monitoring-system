@@ -3,11 +3,13 @@
 #include <PubSubClient.h>
 
 const char* ssid = "Wokwi-GUEST";
-const char* mqtt_server = "103.147.92.134"; // testing public
-// const char* mqtt_server = "broker.hivemq.com"; testing lokal
+
+const bool IS_DEPLOYED = false;
+
+const char* mqtt_server = IS_DEPLOYED ? "103.147.92.134" : "broker.emqx.io"; 
 const int mqtt_port = 1883;
 const char* mqtt_user = "sensor1";
-const char* mqtt_pass = "changeMe";
+const char* mqtt_pass = "sensor1Secret";
 const char* DEVICE_ID = "Sensor-banjir1";
 
 #define TRIG_PIN 21
@@ -47,15 +49,23 @@ void publishSensorData() {
   char payload[300];
   serializeJson(doc, payload);
 
-  client.publish("kelompok2/sensors/sungai", payload, true);
-  Serial.println("Node 1 Mengirim: " + String(payload));
+  if (client.publish("kelompok2/sensors/sungai", payload, true)) {
+    Serial.println("Data terkirim: " + String(payload));
+  } else {
+    Serial.println("Gagal kirim data!");
+  } 
 }
 
 void reconnect() {
-  while (!client.connected()) {
-    Serial.print("Mencoba koneksi MQTT Node 1...");
-    if (client.connect(DEVICE_ID, mqtt_user, mqtt_pass)) {
-      Serial.println("TERHUBUNG");
+  if (!client.connected()) {
+    Serial.print("Mencoba koneksi MQTT...");
+
+    bool success = IS_DEPLOYED ? 
+                   client.connect(DEVICE_ID, mqtt_user, mqtt_pass) :
+                   client.connect(DEVICE_ID);
+
+    if (success) {
+      Serial.println("TERHUBUNG!");
     } else {
       Serial.print("gagal, reconnect=");
       Serial.print(client.state());
@@ -83,10 +93,11 @@ void setup() {
 }
 
 void loop() {
+  client.loop();
+
   if (!client.connected()) {
     reconnect();
   }
-  client.loop();
 
   unsigned long now = millis();
   if (now -lastMsg > 5000) {

@@ -4,11 +4,13 @@
 #include <ArduinoJson.h>
 
 const char* ssid = "Wokwi-GUEST";
-const char* mqtt_server = "103.147.92.134"; // testing public
-// const char* mqtt_server = "broker.hivemq.com"; testing lokal
+
+const bool IS_DEPLOYED = false;
+
+const char* mqtt_server = IS_DEPLOYED ? "103.147.92.134" : "broker.hivemq.com";
 const int mqtt_port = 1883;
 const char* mqtt_user = "sensor2";
-const char* mqtt_pass = "changeMe";
+const char* mqtt_pass = "sensor2Secret";
 const char* DEVICE_ID = "Sensor-banjir-cuaca2";
 
 #define POTENTIO_PIN 34 
@@ -60,7 +62,12 @@ void publishSensorData() {
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Mencoba koneksi MQTT...");
-    if (client.connect(DEVICE_ID, mqtt_user, mqtt_pass)) {
+
+    bool success = IS_DEPLOYED ?
+                   client.connect(DEVICE_ID, mqtt_user, mqtt_pass) :
+                   client.connect(DEVICE_ID);
+    
+    if (success) { 
       Serial.println("TERHUBUNG!");
     } else {
       Serial.print("gagal, reconnect=");
@@ -88,10 +95,11 @@ void setup() {
 }
 
 void loop() {
+  client.loop();
+  
   if (!client.connected()) {
     reconnect();
   }
-  client.loop();
 
   unsigned long now = millis();
   if (now - lastMsg > 5000) {
