@@ -18,6 +18,7 @@ CREATE TABLE auth_oauthToken(
     access_token VARCHAR(255) UNIQUE NOT NULL,
     refresh_token VARCHAR(255) UNIQUE,
     expires_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user_user(id),
     INDEX idx_auth_token_access (access_token)
 );
 
@@ -70,7 +71,6 @@ CREATE TABLE user_user(
     email VARCHAR(150) UNIQUE,
     password VARCHAR(255) NOT NULL,
     role ENUM('admin', 'user') DEFAULT 'user',
-    provider ENUM('local', 'google') DEFAULT 'local',
     waktuDibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_user_id (id),
     INDEX idx_user_name (username),
