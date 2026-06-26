@@ -3,8 +3,11 @@
 #include <PubSubClient.h>
 
 const char* ssid = "Wokwi-GUEST";
-const char* mqtt_server = "broker.hivemq.com";
+const char* mqtt_server = "103.147.92.134"; // testing public
+// const char* mqtt_server = "broker.hivemq.com"; testing lokal
 const int mqtt_port = 1883;
+const char* mqtt_user = "sensor1";
+const char* mqtt_pass = "changeMe";
 const char* DEVICE_ID = "Sensor-banjir1";
 
 #define TRIG_PIN 21
@@ -51,7 +54,7 @@ void publishSensorData() {
 void reconnect() {
   while (!client.connected()) {
     Serial.print("Mencoba koneksi MQTT Node 1...");
-    if (client.connect(DEVICE_ID)) {
+    if (client.connect(DEVICE_ID, mqtt_user, mqtt_pass)) {
       Serial.println("TERHUBUNG");
     } else {
       Serial.print("gagal, reconnect=");
