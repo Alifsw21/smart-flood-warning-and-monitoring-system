@@ -11,11 +11,12 @@ $data = [
 ];
 
 $curl = curl_init();
+$oauthLoginUrl = getenv('OAUTH_LOGIN_URL') ?: 'http://localhost:3002/api/auth/login';
 
 curl_setopt_array($curl, [
 
     CURLOPT_URL =>
-        "http://localhost:3000/api/auth/login",
+        $oauthLoginUrl,
 
     CURLOPT_RETURNTRANSFER => true,
 

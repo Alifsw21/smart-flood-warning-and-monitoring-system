@@ -72,15 +72,6 @@ if(isset($_SESSION['role'])){
 
                     </form>
 
-                    <hr>
-
-                    <a
-                        href="http://localhost:3000/auth/google"
-                        class="btn btn-danger w-100"
-                    >
-                        Login Dengan Google
-                    </a>
-
                 </div>
 
             </div>
