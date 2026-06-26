@@ -14,11 +14,6 @@ class ZoneController extends BaseController {
     public function index() {
         try {
             $data = $this->zoneModel->all();
-
-            if (empty($data)) {
-                $this->sendResponse(200, true, "Belum ada data zona", []);
-            }
-
             $this->sendResponse(200, true, "Data zona berhasil diambil", $data);
         } catch (\Throwable $e) {
             $this->handleException($e);
@@ -28,21 +23,20 @@ class ZoneController extends BaseController {
     public function store() {
         $input = $this->getJsonInput();
 
-        if (empty($input['nama_kota'])) {
-            $this->sendResponse(400, false, "nama_kota harus diisi");
-        }
-
         try {
-            $id = $this->zoneModel->create($input);
+            $validated = RiverValidator::validateZone($input);
+            $id = $this->zoneModel->create($validated);
 
             $this->publishEvent('zone_events', [
                 'event' => 'zona_created',
                 'id' => $id,
-                'nama_kota' => $input['nama_kota'],
+                'nama_kota' => $validated['nama_kota'],
                 'timestamp' => date('c')
             ]);
 
             $this->sendResponse(201, true, "Data zona berhasil ditambahkan", ["id" => $id]);
+        } catch (\InvalidArgumentException $e) {
+            $this->sendResponse(400, false, $e->getMessage());
         } catch (\Throwable $e) {
             $this->handleException($e);
         }
@@ -51,8 +45,7 @@ class ZoneController extends BaseController {
     public function show($id) {
         try {
             $data = $this->zoneModel->find($id);
-
-            if (empty($data)) {
+            if (!$data) {
                 $this->sendResponse(404, false, "Data zona dengan id {$id} tidak ditemukan");
             }
 
@@ -65,13 +58,14 @@ class ZoneController extends BaseController {
     public function update($id) {
         try {
             $data = $this->zoneModel->find($id);
-
-            if (empty($data)) {
+            if (!$data) {
                 $this->sendResponse(404, false, "Data zona dengan id {$id} tidak ditemukan");
             }
 
             $input = $this->getJsonInput();
-            $this->zoneModel->update($id, $input);
+            $validated = RiverValidator::validateZone($input);
+
+            $this->zoneModel->update($id, $validated);
             $updateData = $this->zoneModel->find($id);
 
             $this->publishEvent('zone_events', [
@@ -81,6 +75,8 @@ class ZoneController extends BaseController {
                 'timestamp' => date('c')
             ]);
             $this->sendResponse(200, true, "Data zona dengan id {$id} berhasil diperbarui", $updateData);
+        } catch (\InvalidArgumentException $e) {
+            $this->sendResponse(400, false, $e->getMessage());
         } catch (\Throwable $e) {
             $this->handleException($e);
         }
@@ -89,8 +85,7 @@ class ZoneController extends BaseController {
     public function destroy($id) {
         try {
             $data = $this->zoneModel->find($id);
-
-            if (empty($data)) {
+            if (!$data) {
                 $this->sendResponse(404, false, "Data zona dengan id {$id} tidak ditemukan");
             }
 

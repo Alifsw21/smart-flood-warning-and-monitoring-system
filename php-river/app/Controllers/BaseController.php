@@ -10,11 +10,15 @@ class BaseController {
 
         header('Content-Type: application/json');
 
+        $now = new \DateTime('now', new \DateTimeZone('UTC'));
+        $timestamp = $now->format('Y-m-d\TH:i:s.v\Z');
+
         echo json_encode([
-            "success"   => $success,
+            "status"   => $success ? "success" : "error",
             "code"      => $code,
-            "message"   => $message,
             "data"      => $data,
+            "message"   => $message,
+            "timestamp" => $timestamp,
             "service"   => "php-river"
         ]);
         exit;
@@ -22,21 +26,21 @@ class BaseController {
 
     protected function getJsonInput() {
         $json = file_get_contents('php://input');
-
-        return json_decode($json, true);
+        $data = json_decode($json, true);
+        return is_array($data) ? $data : [];
     }
 
     protected function handleException(\Throwable $e) {
-        $isDebug = isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true';
+       $isDebug = isset($_ENV['APP_DEBUG']) && $_ENV['APP_DEBUG'] === 'true';
         $debugData = $isDebug ? $e->getMessage() : null;
 
         if ($e instanceof \PDOException) {
             error_log("Database Error: " . $e->getMessage());
             $this->sendResponse(500, false, "Terjadi kesalahan pada database", $debugData);
         } else {
-            error_log("System Error: " . $e->getMessage());
-            $this->sendResponse(500, false, "Terjadi kesalahan pada server", $debugData);
-        }
+           error_log("System Error: " . $e->getMessage());
+           $this->sendResponse(500, false, "Terjadi kesalahan pada server", $debugData);
+           }
     }
 
     protected function publishEvent($queueName, $eventData) {
@@ -45,7 +49,8 @@ class BaseController {
             $rabbitMQ->publish($queueName, $eventData);
             $rabbitMQ->close();
         } catch (\Throwable $e) {
-            error_log("RabbitMQ Publish Error: " . $e->getMessage());
+          error_log("RabbitMQ Publish Error: " . $e->getMessage());
         }
+        return;
     }
 }

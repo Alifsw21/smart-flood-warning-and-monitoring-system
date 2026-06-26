@@ -14,11 +14,6 @@ class SungaiController extends BaseController {
     public function index() {
         try {
             $data = $this->sungaiModel->all();
-
-            if (empty($data)) {
-                $this->sendResponse(200, true, "Belum ada data sungai", []);
-            }
-
             $this->sendResponse(200, true, "Data sungai berhasil diambil", $data);
         } catch (\Throwable $e) {
             $this->handleException($e);
@@ -28,22 +23,21 @@ class SungaiController extends BaseController {
     public function store() {
         $input = $this->getJsonInput();
 
-        if (empty($input['zoneId']) || empty($input['lokasiSungai'])) {
-            $this->sendResponse(400, false, "zoneId dan lokasiSungai harus diisi");
-        }
-
         try {
-            $id = $this->sungaiModel->create($input);
+            $validated = RiverValidator::validateSungai($input);
+            $id = $this->sungaiModel->create($validated);
 
             $this->publishEvent('sungai_events', [
                 'event' => 'sungai_created',
                 'id' => $id,
-                'zoneId' => $input['zoneId'],
-                'lokasiSungai' => $input['lokasiSungai'],
+                'zoneId' => $validated['zoneId'],
+                'lokasiSungai' => $validated['lokasiSungai'],
                 'timestamp' => date('c')
             ]);
 
             $this->sendResponse(201, true, "Data sungai berhasil ditambahkan", ["id" => $id]);
+        } catch (\InvalidArgumentException $e) {
+            $this->sendResponse(400, false, $e->getMessage());
         } catch (\Throwable $e) {
             $this->handleException($e);
         }
@@ -52,11 +46,9 @@ class SungaiController extends BaseController {
     public function show($id) {
         try {
             $data = $this->sungaiModel->find($id);
-
-            if (empty($data)) {
+            if (!$data) {
                 $this->sendResponse(404, false, "Data sungai dengan id {$id} tidak ditemukan");
             }
-
             $this->sendResponse(200, true, "Data sungai dengan id {$id} berhasil diambil", $data);
         } catch (\Throwable $e) {
             $this->handleException($e);
@@ -66,13 +58,14 @@ class SungaiController extends BaseController {
     public function update($id) {
         try {
             $data = $this->sungaiModel->find($id);
-
-            if (empty($data)) {
+            if (!$data) {
                 $this->sendResponse(404, false, "Data sungai dengan id {$id} tidak ditemukan");
             }
 
             $input = $this->getJsonInput();
-            $this->sungaiModel->update($id, $input);
+            $validated = RiverValidator::validateSungai($input);
+
+            $this->sungaiModel->update($id, $validated);
             $updatedData = $this->sungaiModel->find($id);
 
             $this->publishEvent('sungai_events', [
@@ -83,6 +76,8 @@ class SungaiController extends BaseController {
             ]);
 
             $this->sendResponse(200, true, "Data sungai dengan id {$id} berhasil diperbarui", $updatedData);
+        } catch (\InvalidArgumentException $e) {
+            $this->sendResponse(400, false, $e->getMessage());
         } catch (\Throwable $e) {
             $this->handleException($e);
         }
@@ -92,7 +87,7 @@ class SungaiController extends BaseController {
         try {
             $data = $this->sungaiModel->find($id);
 
-            if (empty($data)) {
+            if (!$data) {
                 $this->sendResponse(404, false, "Data sungai dengan id {$id} tidak ditemukan");
             }
 
@@ -104,6 +99,7 @@ class SungaiController extends BaseController {
                 'data' => $data,
                 'timestamp' => date('c')
             ]);
+            
             $this->sendResponse(200, true, "Data sungai dengan id {$id} berhasil dihapus", $data);
         } catch (\Throwable $e) {
             $this->handleException($e);
