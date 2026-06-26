@@ -57,7 +57,7 @@ CREATE TABLE river_sensorReading(
     suhuRataRata FLOAT NOT NULL,
     kelembapanUdara FLOAT NOT NULL,
     kecepatanAngin FLOAT NOT NULL,
-    arahAngin VARCHAR(10),
+    arahAngin FLOAT NOT NULL,
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idNode) REFERENCES river_sensorNode(id),
     INDEX idx_river_reading_node (idNode),
