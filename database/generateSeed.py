@@ -53,9 +53,8 @@ def generate():
             email = f"{username}@kelompok2.com"
             password_dummy = "$2y$10$dummyhashpassword12345678"
             role = 'admin' if i == 1 else 'user'
-            provider = 'local' if i == 1 else 'local'
             waktu_acak = datetime.now() - timedelta(days=random.randint(0, 30), hours=random.randint(0, 23))
-            f.write(f"INSERT INTO user_user (id, username, email, password, role, provider, waktuDibuat) VALUES ({i}, '{username}', '{email}', '{password_dummy}', '{role}', '{provider}', '{waktu_acak.strftime('%Y-%m-%d %H:%M:%S')}');\n")
+            f.write(f"INSERT INTO user_user (id, username, email, password, role, waktuDibuat) VALUES ({i}, '{username}', '{email}', '{password_dummy}', '{role}', '{waktu_acak.strftime('%Y-%m-%d %H:%M:%S')}');\n")
         f.write("\n")
 
         f.write("-- 5. Data Laporan\n")
