@@ -1,30 +1,3 @@
-<?php
-session_start();
-
-if(isset($_SESSION['role'])){
-
-    if($_SESSION['role'] == 'admin'){
-        header("Location: admin_dashboard.php");
-        exit;
-    }
-
-    if($_SESSION['role'] == 'user'){
-        header("Location: user_dashboard.php");
-        exit;
-    }
-}
-?>
-
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Flood Detection Login</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-
-<body class="bg-light">
-
 <div class="container mt-5">
 
     <div class="row justify-content-center">
@@ -34,15 +7,35 @@ if(isset($_SESSION['role'])){
             <div class="card shadow">
 
                 <div class="card-header text-center">
+
                     <h3>Flood Detection System</h3>
+
                 </div>
 
                 <div class="card-body">
 
-                    <form method="POST" action="process_login.php">
+                    <?php if(isset($error)): ?>
+
+                        <div class="alert alert-danger">
+
+                            <?= $error; ?>
+
+                        </div>
+
+                    <?php endif; ?>
+
+                    <form
+                        method="POST"
+                        action="/login"
+                    >
 
                         <div class="mb-3">
-                            <label>Username</label>
+
+                            <label class="form-label">
+
+                                Username
+
+                            </label>
 
                             <input
                                 type="text"
@@ -50,10 +43,16 @@ if(isset($_SESSION['role'])){
                                 class="form-control"
                                 required
                             >
+
                         </div>
 
                         <div class="mb-3">
-                            <label>Password</label>
+
+                            <label class="form-label">
+
+                                Password
+
+                            </label>
 
                             <input
                                 type="password"
@@ -61,13 +60,16 @@ if(isset($_SESSION['role'])){
                                 class="form-control"
                                 required
                             >
+
                         </div>
 
                         <button
-                            type="submit"
                             class="btn btn-primary w-100"
+                            type="submit"
                         >
+
                             Login JWT
+
                         </button>
 
                     </form>
@@ -78,7 +80,9 @@ if(isset($_SESSION['role'])){
                         href="http://localhost:3000/auth/google"
                         class="btn btn-danger w-100"
                     >
-                        Login Dengan Google
+
+                        Login dengan Google
+
                     </a>
 
                 </div>
@@ -90,6 +94,3 @@ if(isset($_SESSION['role'])){
     </div>
 
 </div>
-
-</body>
-</html>

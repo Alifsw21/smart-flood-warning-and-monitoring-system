@@ -1,8 +1,12 @@
 services:
 
   php-user:
+
     build: .
+
     container_name: php-user
+
     ports:
-      - "8080:80"
+      - "8000:80"
+
     restart: unless-stopped
