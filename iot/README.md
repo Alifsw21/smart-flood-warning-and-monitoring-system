@@ -90,3 +90,54 @@ bash iot/tests/s1-e2e.sh            # hanya S1
 ## Node-RED UI
 
 Editor: http://localhost:1880 — flow **IoT S1 Pipeline**.
+
+## Troubleshooting: "MQTT tidak dapat data IoT"
+
+### Penyebab paling sering: broker salah
+
+| Sumber data | Broker yang dipakai | Kelihatan di compose? |
+|-------------|---------------------|------------------------|
+| **Wokwi** (`IS_DEPLOYED=false`) | `broker.hivemq.com` (internet) | **Tidak** — bukan `mosquitto` lokal |
+| **`iot/simulator.py`** dengan `MQTT_HOST=localhost` | Mosquitto Docker port 1883 | **Ya** |
+| **Node-RED / python-ml** di compose | `mosquitto:1883` (internal) | **Ya** |
+
+Firmware Wokwi **tidak** mengirim ke Mosquitto lokal. Untuk uji S1 di Docker, jalankan simulator Python:
+
+```bash
+docker compose up -d mosquitto node-red express-gateway oauth-server php-river mysql
+MQTT_HOST=localhost python3 iot/simulator.py
+```
+
+### Cek cepat (3 langkah)
+
+```bash
+# 1. Broker hidup?
+docker compose ps mosquitto
+
+# 2. MQTT bisa kirim/terima?
+bash iot/tests/mqtt-smoke.sh
+
+# 3. Pipeline S1 penuh?
+bash iot/tests/s1-e2e.sh
+```
+
+### Node-RED butuh DUA topik
+
+Flow merge menunggu **sungai** dan **cuaca** berpasangan. Hanya satu topik → tidak ada POST ke Gateway (status node: "waiting pair").
+
+### Wokwi ingin ke Mosquitto lokal?
+
+Opsi A — pakai simulator Python (disarankan untuk compose).
+
+Opsi B — firmware deploy: `IS_DEPLOYED=true`, `secrets.h` dengan host IP mesin (`localhost` tidak bisa dari Wokwi; pakai IP LAN atau server kursus).
+
+Opsi C — tetap HiveMQ untuk Wokwi saja; itu terpisah dari stack Docker compose.
+
+### Monitor topik manual
+
+```bash
+# butuh mosquitto-clients (brew install mosquitto) atau pakai mqtt-smoke.sh
+mosquitto_sub -h localhost -t 'kelompok2/sensors/#' -v
+```
+
+Di terminal lain: `MQTT_HOST=localhost python3 iot/simulator.py`
