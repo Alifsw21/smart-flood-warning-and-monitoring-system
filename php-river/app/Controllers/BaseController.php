@@ -62,4 +62,18 @@ class BaseController {
         }
         return;
     }
+
+    protected function publishEvents(array $events) {
+        if (empty($events)) {
+            return;
+        }
+
+        try {
+            $rabbitMQ = new RabbitMQPublisher();
+            $rabbitMQ->publishMany($events);
+            $rabbitMQ->close();
+        } catch (\Throwable $e) {
+            error_log("RabbitMQ Publish Error: " . $e->getMessage());
+        }
+    }
 }

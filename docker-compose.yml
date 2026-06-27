@@ -138,6 +138,30 @@ services:
     networks:
       - smartcity-net
 
+  php-analytics-consumer:
+    build:
+      context: ./php-analytics
+      dockerfile: Dockerfile.consumer
+    container_name: smartcity-php-analytics-consumer
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-kelompok2}
+      DB_USER: analytics
+      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
+    networks:
+      - smartcity-net
+
   python-ml-service:
     build: ./python-ml-service
     container_name: smartcity-python-ml
@@ -168,6 +192,54 @@ services:
       ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
     ports:
       - "5001:8000"
+    networks:
+      - smartcity-net
+
+  python-ml-consumer-air:
+    build: ./python-ml-service
+    container_name: smartcity-ml-consumer-air
+    restart: unless-stopped
+    command: ["python", "consumers/sensorReadingConsumer.py"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-RabbitSecret}
+      RABBITMQ_VHOST: /
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kelompok2}
+      RIVER_DB_USER: river
+      RIVER_DB_PASSWORD: ${RIVER_DB_PASSWORD:-RiverSecret}
+    networks:
+      - smartcity-net
+
+  python-ml-consumer-banjir:
+    build: ./python-ml-service
+    container_name: smartcity-ml-consumer-banjir
+    restart: unless-stopped
+    command: ["python", "consumers/banjirConsumer.py"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-RabbitSecret}
+      RABBITMQ_VHOST: /
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     networks:
       - smartcity-net
 

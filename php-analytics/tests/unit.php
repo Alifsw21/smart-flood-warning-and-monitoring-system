@@ -51,6 +51,12 @@ $pdo->exec("CREATE TABLE analytics_peringatan (
     nilaiProbabilitas REAL DEFAULT 0.0,
     recorded_at TEXT
 )");
+$pdo->exec("CREATE TABLE user_riwayatBanjir (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    idSungai INTEGER,
+    tinggiAir REAL,
+    status TEXT
+)");
 
 $riverStmt = $pdo->prepare("INSERT INTO river_sungai (id, lokasiSungai) VALUES (:id, :lokasiSungai)");
 $riverStmt->execute([':id' => 1, ':lokasiSungai' => 'Sungai Ciliwung']);
@@ -103,6 +109,16 @@ assert_test($model->delete(1) === 1, 'delete(1) returns 1');
 assert_test($model->delete(999) === 0, 'delete(999) returns 0');
 assert_test(count($model->getAll([])) === 3, 'getAll([]) after delete returns 3 rows');
 assert_test($model->ping() === true, 'ping() returns true');
+
+$created = $model->createFromAlert([
+    'idSungai' => 1,
+    'tipePeringatan' => 'waspada',
+    'nilaiProbabilitas' => 0.72,
+    'tinggiAir' => 3.8,
+]);
+assert_test($created['tipePeringatan'] === 'waspada', 'createFromAlert() stores waspada alert');
+$historyCount = (int) $pdo->query('SELECT COUNT(*) FROM user_riwayatBanjir')->fetchColumn();
+assert_test($historyCount === 1, 'createFromAlert() inserts riwayat for waspada/bencana');
 
 $validator = new PeringatanValidator();
 assert_test($validator->validateId('5') === null, 'validateId("5") returns null');

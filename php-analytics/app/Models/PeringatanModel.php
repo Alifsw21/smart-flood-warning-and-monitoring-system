@@ -98,6 +98,52 @@ class PeringatanModel {
         return (int) $stmt->rowCount();
     }
 
+    public function createFromAlert(array $payload): array {
+        $idSungai = (int) ($payload['idSungai'] ?? 0);
+        $tipe = strtolower((string) ($payload['tipePeringatan'] ?? 'normal'));
+        if (!in_array($tipe, ['normal', 'waspada', 'bencana'], true)) {
+            $tipe = 'normal';
+        }
+        $probabilitas = (float) ($payload['nilaiProbabilitas'] ?? $payload['probabilitas'] ?? 0.0);
+        $tinggiAir = (float) ($payload['tinggiAir'] ?? 0.0);
+
+        $db = $this->getConnection();
+        $stmt = $db->prepare(
+            "INSERT INTO {$this->table} (idSungai, tipePeringatan, nilaiProbabilitas)
+             VALUES (:idSungai, :tipePeringatan, :nilaiProbabilitas)"
+        );
+        $stmt->bindValue(':idSungai', $idSungai, PDO::PARAM_INT);
+        $stmt->bindValue(':tipePeringatan', $tipe, PDO::PARAM_STR);
+        $stmt->bindValue(':nilaiProbabilitas', $probabilitas);
+        $stmt->execute();
+
+        if (in_array($tipe, ['waspada', 'bencana'], true)) {
+            if ($tinggiAir >= 3.5) {
+                $statusRiwayat = 'tinggi';
+            } elseif ($tinggiAir >= 2.0) {
+                $statusRiwayat = 'sedang';
+            } else {
+                $statusRiwayat = 'ringan';
+            }
+
+            $history = $db->prepare(
+                "INSERT INTO user_riwayatBanjir (idSungai, tinggiAir, status)
+                 VALUES (:idSungai, :tinggiAir, :status)"
+            );
+            $history->bindValue(':idSungai', $idSungai, PDO::PARAM_INT);
+            $history->bindValue(':tinggiAir', $tinggiAir);
+            $history->bindValue(':status', $statusRiwayat, PDO::PARAM_STR);
+            $history->execute();
+        }
+
+        return [
+            'id' => (int) $db->lastInsertId(),
+            'idSungai' => $idSungai,
+            'tipePeringatan' => $tipe,
+            'nilaiProbabilitas' => $probabilitas,
+        ];
+    }
+
     public function ping() {
         if ($this->connectionError instanceof PDOException) {
             return false;
