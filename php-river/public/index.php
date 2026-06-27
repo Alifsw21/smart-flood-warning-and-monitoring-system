@@ -80,9 +80,21 @@ if ($path === '/api/river/sensors') {
     $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
 }
 
+if (preg_match('#^/api/river/sensors/([^/]+)/readings$#', $path, $matches)) {
+    $id = $matches[1];
+
+    if ($method === 'GET') {
+        $readingController->readingsByNode($id);
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
 if (preg_match('#^/api/river/sensors/([^/]+)$#', $path, $matches)) {
     $id = $matches[1];
 
+    if ($method === 'GET') {
+        $sensorNodeController->show($id);
+    }
     if ($method === 'PUT') {
         $sensorNodeController->update($id, $userRole);
     }
@@ -97,7 +109,7 @@ if ($path === '/api/river/zones') {
         $zoneController->index();
     }
     if ($method === 'POST') {
-        $zoneController->store();
+        $zoneController->store($userRole);
     }
     $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
 }
@@ -109,10 +121,10 @@ if (preg_match('#^/api/river/zones/([^/]+)$#', $path, $matches)) {
         $zoneController->show($id);
     }
     if ($method === 'PUT') {
-        $zoneController->update($id);
+        $zoneController->update($id, $userRole);
     }
     if ($method === 'DELETE') {
-        $zoneController->destroy($id);
+        $zoneController->destroy($id, $userRole);
     }
     $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
 }
@@ -122,7 +134,7 @@ if ($path === '/api/river/sungai') {
         $sungaiController->index();
     }
     if ($method === 'POST') {
-        $sungaiController->store();
+        $sungaiController->store($userRole);
     }
     $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
 }
@@ -134,15 +146,15 @@ if (preg_match('#^/api/river/sungai/([^/]+)$#', $path, $matches)) {
         $sungaiController->show($id);
     }
     if ($method === 'PUT') {
-        $sungaiController->update($id);
+        $sungaiController->update($id, $userRole);
     }
     if ($method === 'DELETE') {
-        $sungaiController->destroy($id);
+        $sungaiController->destroy($id, $userRole);
     }
     $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
 }
 
-$readingPaths = ['/api/river/readings', '/api/environment/readings'];
+$readingPaths = ['/api/river/readings', '/api/environment/readings', '/api/traffic/readings'];
 
 if (in_array($path, $readingPaths, true)) {
     if ($method === 'GET') {
@@ -150,6 +162,22 @@ if (in_array($path, $readingPaths, true)) {
     }
     if ($method === 'POST') {
         $readingController->store();
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+$currentPaths = ['/api/environment/current', '/api/traffic/current'];
+
+if (in_array($path, $currentPaths, true)) {
+    if ($method === 'GET') {
+        $readingController->current();
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+if ($path === '/api/traffic/history') {
+    if ($method === 'GET') {
+        $readingController->history();
     }
     $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
 }

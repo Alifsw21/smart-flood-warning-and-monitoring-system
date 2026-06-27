@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace App\Controllers;
 
@@ -16,7 +16,6 @@ class RiverValidator {
         return $value === '';
     }
 
-    // Validasi input untuk SungaiController (store & update)
     public static function validateSungai(array $data): array {
         $errors = [];
 
@@ -31,10 +30,13 @@ class RiverValidator {
             throw new \InvalidArgumentException(implode(', ', $errors));
         }
 
+        if (!is_numeric($data['zoneId'])) {
+            throw new \InvalidArgumentException("Field 'zoneId' harus berupa angka numerik.");
+        }
+
         return $data;
     }
 
-    // Validasi input untuk ZoneController (store & update)
     public static function validateZone(array $data): array {
         $errors = [];
 
@@ -49,7 +51,6 @@ class RiverValidator {
         return $data;
     }
 
-    // Validasi input untuk SensorReadingController
     public static function validateReading(array $data): array {
         $errors = [];
 
@@ -63,12 +64,11 @@ class RiverValidator {
             }
         }
 
-        // Validasi tipe data numerik untuk FLOAT di database
         $numericFields = [
-            'tinggiAir', 'kelembapanTanah', 'curahHujan', 'suhuRataRata', 'kelembapanUdara', 'kecepatanAngin'
+            'idNode', 'tinggiAir', 'kelembapanTanah', 'curahHujan', 'suhuRataRata', 'kelembapanUdara', 'kecepatanAngin', 'arahAngin'
         ];
         foreach ($numericFields as $field) {
-            if (isset($data[$field]) && !is_numeric($data[$field])) {
+            if (isset($data[$field]) && $data[$field] !== '' && $data[$field] !== null && !is_numeric($data[$field])) {
                 $errors[] = "Field '$field' harus berupa angka numerik.";
             }
         }
@@ -78,10 +78,8 @@ class RiverValidator {
         }
 
         return $data;
-
     }
 
-    // Validasi input untuk SensorNodeController
     public static function validateNode(array $data): array {
         $errors = [];
         $required = ['idSungai', 'idStation', 'namaNode', 'posisi', 'elevasi'];
@@ -94,6 +92,17 @@ class RiverValidator {
 
         if (!empty($errors)) {
             throw new \InvalidArgumentException(implode(', ', $errors));
+        }
+
+        if (!in_array($data['posisi'], ['hulu', 'hilir'], true)) {
+            throw new \InvalidArgumentException("Field 'posisi' harus 'hulu' atau 'hilir'.");
+        }
+
+        $numericFields = ['idSungai', 'idStation', 'elevasi'];
+        foreach ($numericFields as $field) {
+            if (!is_numeric($data[$field])) {
+                throw new \InvalidArgumentException("Field '$field' harus berupa angka numerik.");
+            }
         }
 
         return $data;

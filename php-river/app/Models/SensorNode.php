@@ -9,13 +9,27 @@ class SensorNode extends BaseModel {
     private $table = 'river_sensorNode';
 
     public function getLatestReadings() {
-        $query = "SELECT n.id, n.idStation, n.namaNode, n.posisi, n.elevasi, s.lokasiSungai
+        $query = "SELECT n.id, n.idSungai, n.idStation, n.namaNode, n.posisi, n.elevasi,
+                         s.lokasiSungai, s.zoneId, z.nama_kota
                 FROM river_sensorNode n
                 JOIN river_sungai s ON n.idSungai = s.id
+                JOIN river_zones z ON s.zoneId = z.id
                 ORDER BY n.id ASC";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findNode($id) {
+        $query = "SELECT n.id, n.idSungai, n.idStation, n.namaNode, n.posisi, n.elevasi,
+                         s.lokasiSungai, s.zoneId, z.nama_kota
+                FROM river_sensorNode n
+                JOIN river_sungai s ON n.idSungai = s.id
+                JOIN river_zones z ON s.zoneId = z.id
+                WHERE n.id = :id";
+        $stmt = $this->db->prepare($query);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function createNode($data) {
@@ -69,10 +83,23 @@ class SensorNode extends BaseModel {
     }
 
     public function deleteNode($id) {
-        $query = "DELETE FROM river_sensorNode WHERE id = :id";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute([':id' => $id]);
+        try {
+            $this->db->beginTransaction();
 
-        return $stmt;
+            $deleteReadings = $this->db->prepare('DELETE FROM river_sensorReading WHERE idNode = :id');
+            $deleteReadings->execute([':id' => $id]);
+
+            $query = "DELETE FROM {$this->table} WHERE id = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([':id' => $id]);
+
+            $this->db->commit();
+            return $stmt;
+        } catch (PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
     }
 }

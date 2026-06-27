@@ -36,6 +36,15 @@ class BaseController {
 
         if ($e instanceof \PDOException) {
             error_log("Database Error: " . $e->getMessage());
+            if (str_contains($e->getMessage(), '1062')) {
+                $this->sendResponse(409, false, $e->getMessage(), $debugData);
+            }
+            if (str_contains($e->getMessage(), '1451') || str_contains($e->getMessage(), 'foreign key constraint')) {
+                $this->sendResponse(409, false, "Data tidak dapat dihapus karena masih memiliki relasi aktif.", $debugData);
+            }
+            if (str_contains($e->getMessage(), 'masih memiliki')) {
+                $this->sendResponse(409, false, $e->getMessage(), $debugData);
+            }
             $this->sendResponse(500, false, "Terjadi kesalahan pada database", $debugData);
         } else {
            error_log("System Error: " . $e->getMessage());

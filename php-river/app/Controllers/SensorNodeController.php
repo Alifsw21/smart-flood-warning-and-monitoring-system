@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Models\SensorNode;
@@ -14,6 +15,20 @@ class SensorNodeController extends BaseController {
         try {
             $data = $this->model->getLatestReadings();
             $this->sendResponse(200, true, "Berhasil mengambil data informasi sensor", $data);
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+
+    public function show($id) {
+        try {
+            $data = $this->model->findNode($id);
+            if (!$data) {
+                $this->sendResponse(404, false, "Node sensor dengan ID $id tidak ditemukan.");
+                return;
+            }
+
+            $this->sendResponse(200, true, "Data node sensor dengan ID $id berhasil diambil.", $data);
         } catch (\Throwable $e) {
             $this->handleException($e);
         }
@@ -45,63 +60,69 @@ class SensorNodeController extends BaseController {
         }
     }
 
-        public function update($id, $userRole) {
-            if ($userRole !== 'admin') {
-                $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat memperbarui data node sensor.");
-                return;
-            }
-
-            if (!$id) {
-                $this->sendResponse(400, false, "Diperlukan parameter ID sensor.");
-                return;
-            }
-
-            $inputData = $this->getJsonInput();
-
-            try {
-                $validated = RiverValidator::validateNode($inputData);
-                $this->model->updateNode($id, $validated);
-                $responseData = array_merge(["id" => $id], $validated);
-                $responseData['timestamp'] = (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z');
-
-                $this->publishEvent('river.node.updated', $responseData);
-
-                $this->sendResponse(200, true, "Data node sensor dengan ID $id berhasil diperbarui.", $responseData);
-            } catch (\InvalidArgumentException $e) {
-                $this->sendResponse(400, false, $e->getMessage());
-            } catch (\Throwable $e) {
-                $this->handleException($e);
-            }
+    public function update($id, $userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat memperbarui data node sensor.");
+            return;
         }
 
-        public function delete($id, $userRole) {
-            if ($userRole !== 'admin') {
-                $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat menghapus data node sensor.");
+        if (!$id) {
+            $this->sendResponse(400, false, "Diperlukan parameter ID sensor.");
+            return;
+        }
+
+        $inputData = $this->getJsonInput();
+
+        try {
+            $existing = $this->model->findNode($id);
+            if (!$existing) {
+                $this->sendResponse(404, false, "Node sensor dengan ID $id tidak ditemukan.");
                 return;
             }
 
-            if (!$id) {
-                $this->sendResponse(400, false, "Diperlukan parameter ID sensor.");
-                return;
-            }
+            $validated = RiverValidator::validateNode($inputData);
+            $this->model->updateNode($id, $validated);
+            $responseData = array_merge(["id" => $id], $validated);
+            $responseData['timestamp'] = (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z');
 
-            try {
-                $stmt = $this->model->deleteNode($id);
-                if ($stmt->rowCount () === 0) {
-                    $this->sendResponse(404, false, "Node sensor dengan ID $id tidak ditemukan.");
-                    return;
-                }
+            $this->publishEvent('river.node.updated', $responseData);
 
-                $eventData = [
-                    "id" => $id,
-                    "timestamp" => (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z')
-                ];
-
-                $this->publishEvent('river.node.deleted', $eventData);
-
-                $this->sendResponse(200, true, "Node sensor dengan ID $id berhasil dihapus.");
-            } catch (\Throwable $e) {
-                $this->handleException($e);
-            }
+            $this->sendResponse(200, true, "Data node sensor dengan ID $id berhasil diperbarui.", $responseData);
+        } catch (\InvalidArgumentException $e) {
+            $this->sendResponse(400, false, $e->getMessage());
+        } catch (\Throwable $e) {
+            $this->handleException($e);
         }
     }
+
+    public function delete($id, $userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat menghapus data node sensor.");
+            return;
+        }
+
+        if (!$id) {
+            $this->sendResponse(400, false, "Diperlukan parameter ID sensor.");
+            return;
+        }
+
+        try {
+            $stmt = $this->model->deleteNode($id);
+            if ($stmt->rowCount() === 0) {
+                $this->sendResponse(404, false, "Node sensor dengan ID $id tidak ditemukan.");
+                return;
+            }
+
+            $eventData = [
+                "id" => $id,
+                "timestamp" => (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z')
+            ];
+
+            $this->publishEvent('river.node.deleted', $eventData);
+
+            $this->sendResponse(200, true, "Node sensor dengan ID $id berhasil dihapus.");
+        } catch (\Throwable $e) {
+            $this->handleException($e);
+        }
+    }
+}

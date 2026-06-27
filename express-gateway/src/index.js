@@ -74,6 +74,8 @@ app.use('/api/river', proxyWithPrefix(upstreams.river, '/api/river'));
 
 app.use('/api/environment', proxyWithPrefix(upstreams.river, '/api/environment'));
 
+app.use('/api/traffic', proxyWithPrefix(upstreams.river, '/api/traffic'));
+
 app.use('/api/analytics', proxyWithPrefix(upstreams.analytics, '/api/analytics'));
 
 app.use('/predict', proxyWithPrefix(upstreams.ml, '/predict'));
