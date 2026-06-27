@@ -10,9 +10,9 @@
     {
         "id": "40c7d09bf38b6c41",
         "type": "mqtt-broker",
-        "name": "iot-mqtt-broker",
-        "broker": "$(IOT_MQTT_BROKER)",
-        "port": "$(IOT_MQTT_PORT)",
+        "name": "mosquitto",
+        "broker": "mosquitto",
+        "port": "1883",
         "clientid": "node-red-s1",
         "autoConnect": true,
         "usetls": false,
