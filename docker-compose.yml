@@ -90,6 +90,8 @@ services:
         condition: service_healthy
       oauth-server:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       OAUTH_LOGIN_URL: http://oauth-server:3002/api/auth/login
       DB_HOST: mysql
@@ -97,6 +99,10 @@ services:
       DB_NAME: ${MYSQL_DATABASE:-kelompok2}
       DB_USER: user
       DB_PASSWORD: ${USER_DB_PASSWORD:-UserSecret}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
     ports:
       - "8000:80"
     networks:

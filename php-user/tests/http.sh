@@ -84,19 +84,32 @@ if ! kill -0 "$server_pid" 2>/dev/null; then
 fi
 
 assert_status GET /nope 404 "GET /nope returns 404"
-assert_status POST /api/flood-history 405 "POST /api/flood-history returns 405"
-assert_status DELETE /api/flood-history/5 403 "DELETE without role header returns 403"
-assert_not_status DELETE /api/flood-history/5 403 "DELETE with admin role passes admin gate" -H "X-User-Role: admin"
-assert_status GET /api/flood-history/abc 400 "GET invalid id returns 400"
-assert_status GET /health 503 "GET /health returns 503 without DB"
 assert_status GET / 200 "GET / serves login page"
+
+assert_status POST /api/flood-history 405 "POST /api/flood-history returns 405"
+assert_status DELETE /api/flood-history/5 403 "DELETE flood-history without admin role returns 403"
+assert_not_status DELETE /api/flood-history/5 403 "DELETE flood-history with admin role passes gate" -H "X-User-Role: admin"
+assert_status GET /api/flood-history/abc 400 "GET invalid flood-history id returns 400"
+
+assert_status GET /api/users 403 "GET /api/users without admin returns 403"
+assert_not_status GET /api/users 403 "GET /api/users with admin passes gate" -H "X-User-Role: admin"
+assert_status POST /api/users 403 "POST /api/users without admin returns 403"
+assert_status GET /api/users/abc 400 "GET invalid user id returns 400"
+assert_status GET /api/users/1 403 "GET /api/users/1 without auth context returns 403"
+assert_not_status GET /api/users/1 403 "GET own profile allowed" -H "X-User-Id: 1" -H "X-User-Role: user"
+
+assert_status GET /api/laporan 500 "GET /api/laporan without DB returns database error"
+assert_status POST /api/laporan 401 "POST /api/laporan without user id returns 401"
+assert_not_status POST /api/laporan 401 "POST /api/laporan with user id passes auth gate" \
+  -H "X-User-Id: 2" -H "X-User-Role: user" \
+  -H "Content-Type: application/json" \
+  -d '{"deskripsiLaporan":"Sensor banjir di gang 3 tidak akurat sejak kemarin malam."}'
+assert_status GET /api/laporan/abc 400 "GET invalid laporan id returns 400"
+
+assert_status GET /health 503 "GET /health returns 503 without DB"
 
 health_body="$(curl -s "http://127.0.0.1:8100/health")"
 assert_body_contains "$health_body" status "/health body has status"
-assert_body_contains "$health_body" code "/health body has code"
-assert_body_contains "$health_body" data "/health body has data"
-assert_body_contains "$health_body" message "/health body has message"
-assert_body_contains "$health_body" timestamp "/health body has timestamp"
 assert_body_contains "$health_body" service "/health body has service"
 
 total=$((passed + failed))

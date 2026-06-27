@@ -3,12 +3,14 @@ FROM php:8.2-apache
 RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     unzip \
-    && docker-php-ext-install pdo pdo_mysql curl \
+    && docker-php-ext-install pdo pdo_mysql curl sockets \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN a2enmod rewrite
+
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 RUN sed -ri -e "s!/var/www/html!/var/www/html/public!g" /etc/apache2/sites-available/*.conf /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
