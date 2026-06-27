@@ -304,4 +304,3 @@ INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHu
 INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHujan, suhuRataRata, kelembapanUdara, kecepatanAngin, arahAngin, recorded_at) VALUES (198, 7, 3.95, 11.4, 20.5, 31.2, 88.5, 3.9, 182.7, '2026-06-26 15:31:52');
 INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHujan, suhuRataRata, kelembapanUdara, kecepatanAngin, arahAngin, recorded_at) VALUES (199, 4, 1.9, 37.2, 12.1, 28.3, 56.4, 11.2, 320.8, '2026-06-26 16:31:52');
 INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHujan, suhuRataRata, kelembapanUdara, kecepatanAngin, arahAngin, recorded_at) VALUES (200, 6, 3.29, 35.0, 21.6, 36.2, 55.7, 13.4, 164.9, '2026-06-26 17:31:52');
-
