@@ -2,6 +2,10 @@ require('dotenv').config();
 
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
+const { jwtMiddleware } = require('./middleware/jwt');
+const { globalLimiter, authLimiter } = require('./middleware/rateLimit');
+const { requestLogger } = require('./middleware/requestLogger');
+const { gatewayError, proxyErrorHandler } = require('./middleware/errors');
 
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
@@ -19,6 +23,9 @@ const nowIso = () => new Date().toISOString();
 const sendJson = (res, code, body) => {
   res.status(code).json(body);
 };
+
+app.use(requestLogger);
+app.use(globalLimiter);
 
 app.get('/health', async (_req, res) => {
   const checks = [
@@ -60,22 +67,34 @@ app.get('/health', async (_req, res) => {
   });
 });
 
+const attachUserHeaders = (proxyReq, req) => {
+  if (!req.user) {
+    return;
+  }
+
+  proxyReq.setHeader('x-user-id', String(req.user.id));
+  proxyReq.setHeader('x-user-role', req.user.role);
+};
+
 const proxyWithPrefix = (target, prefix) => createProxyMiddleware({
   target,
   changeOrigin: true,
   pathRewrite: (path) => `${prefix}${path}`,
+  on: {
+    proxyReq: attachUserHeaders,
+    error: proxyErrorHandler,
+  },
 });
 
 app.use('/api/auth', proxyWithPrefix(upstreams.oauth, '/api/auth'));
 
+app.use(jwtMiddleware);
+app.use(authLimiter);
+
 app.use('/api/river', proxyWithPrefix(upstreams.river, '/api/river'));
-
 app.use('/api/environment', proxyWithPrefix(upstreams.river, '/api/environment'));
-
 app.use('/api/traffic', proxyWithPrefix(upstreams.river, '/api/traffic'));
-
 app.use('/api/analytics', proxyWithPrefix(upstreams.analytics, '/api/analytics'));
-
 app.use('/predict', proxyWithPrefix(upstreams.ml, '/predict'));
 app.use('/api/sensor', proxyWithPrefix(upstreams.ml, '/api/sensor'));
 app.use('/detect', proxyWithPrefix(upstreams.ml, '/detect'));
@@ -83,7 +102,15 @@ app.use('/detect', proxyWithPrefix(upstreams.ml, '/detect'));
 app.use('/', createProxyMiddleware({
   target: upstreams.user,
   changeOrigin: true,
+  on: {
+    proxyReq: attachUserHeaders,
+    error: proxyErrorHandler,
+  },
 }));
+
+app.use((_req, res) => {
+  gatewayError(res, 404, 'Endpoint tidak ditemukan');
+});
 
 app.listen(PORT, () => {
   console.log(`API Gateway listening on port ${PORT}`);

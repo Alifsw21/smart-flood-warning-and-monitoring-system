@@ -183,6 +183,7 @@ services:
       - python-ml-service
     environment:
       PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
       OAUTH_URL: http://oauth-server:3002
       PHP_USER_URL: http://php-user:80
       PHP_RIVER_URL: http://php-river:80
