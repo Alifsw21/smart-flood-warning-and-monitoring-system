@@ -176,6 +176,7 @@ services:
     container_name: smartcity-gateway
     restart: unless-stopped
     depends_on:
+      - redis
       - oauth-server
       - php-user
       - php-river
@@ -183,7 +184,13 @@ services:
       - python-ml-service
     environment:
       PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
       OAUTH_URL: http://oauth-server:3002
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
       PHP_USER_URL: http://php-user:80
       PHP_RIVER_URL: http://php-river:80
       PHP_ANALYTICS_URL: http://php-analytics:80
