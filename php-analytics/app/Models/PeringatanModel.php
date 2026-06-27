@@ -75,6 +75,40 @@ class PeringatanModel {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function getActive(array $filters) {
+        $query = "SELECT p.id, p.idSungai, s.lokasiSungai, p.tipePeringatan, p.nilaiProbabilitas, p.recorded_at
+                FROM {$this->table} p
+                LEFT JOIN river_sungai s ON p.idSungai = s.id
+                WHERE p.tipePeringatan IN ('waspada', 'bencana')";
+        $params = [];
+
+        if (isset($filters['idSungai']) && $filters['idSungai'] !== '') {
+            $query .= " AND p.idSungai = :idSungai";
+            $params[':idSungai'] = [(int) $filters['idSungai'], PDO::PARAM_INT];
+        }
+
+        if (isset($filters['from']) && $filters['from'] !== '') {
+            $query .= " AND p.recorded_at >= :from";
+            $params[':from'] = [$filters['from'], PDO::PARAM_STR];
+        }
+
+        if (isset($filters['to']) && $filters['to'] !== '') {
+            $query .= " AND p.recorded_at <= :to";
+            $params[':to'] = [$filters['to'], PDO::PARAM_STR];
+        }
+
+        $query .= " ORDER BY p.recorded_at DESC, p.id DESC";
+
+        $stmt = $this->getConnection()->prepare($query);
+
+        foreach ($params as $name => $value) {
+            $stmt->bindValue($name, $value[0], $value[1]);
+        }
+
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function getById($id) {
         $query = "SELECT p.id, p.idSungai, s.lokasiSungai, p.tipePeringatan, p.nilaiProbabilitas, p.recorded_at
                 FROM {$this->table} p

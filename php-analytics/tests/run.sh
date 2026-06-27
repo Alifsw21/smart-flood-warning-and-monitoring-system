@@ -22,6 +22,15 @@ else
   failed=1
 fi
 
+if [ "${RUN_SMOKE:-1}" = "1" ]; then
+  if bash php-analytics/tests/smoke.sh; then
+    echo "PASS smoke tests"
+  else
+    echo "FAIL smoke tests"
+    failed=1
+  fi
+fi
+
 if [ "$failed" -eq 0 ]; then
   echo "PASS php-analytics test suite"
   exit 0

@@ -49,9 +49,13 @@ $sendRouterResponse = function ($code, $status, $message) {
     exit;
 };
 
-if ($path === '/api/analytics/peringatan') {
+if ($path === '/api/analytics/peringatan' || $path === '/api/environment/alerts') {
     if ($method === 'GET') {
-        $makeController()->index();
+        if ($path === '/api/environment/alerts') {
+            $makeController()->activeAlerts();
+        } else {
+            $makeController()->index();
+        }
     }
 
     $sendRouterResponse(405, "error", "Method HTTP Tidak Diizinkan.");
