@@ -1,0 +1,222 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: smartcity-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-RootSecret}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kelompok2}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
+    networks:
+      - smartcity-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-RootSecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: smartcity-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    networks:
+      - smartcity-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: smartcity-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - smartcity-net
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: smartcity-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./iot/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      - smartcity-net
+  
+  node-red:
+    image: nodered/node-red:latest
+    container_name: smartcity-IoT-nodered
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./iot/node-red-data:/data
+    networks:
+      - smartcity-net
+    depends_on:
+      - mosquitto
+
+  oauth-server:
+    build: ./oauth-server
+    container_name: smartcity-oauth
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 3002
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: auth
+      DB_PASSWORD: ${AUTH_DB_PASSWORD:-AuthSecret}
+      DB_NAME: ${MYSQL_DATABASE:-kelompok2}
+    ports:
+      - "3002:3002"
+    networks:
+      - smartcity-net
+
+  php-user:
+    build: ./php-user
+    container_name: smartcity-php-user
+    restart: unless-stopped
+    depends_on:
+      oauth-server:
+        condition: service_started
+    environment:
+      OAUTH_LOGIN_URL: http://oauth-server:3002/api/auth/login
+    ports:
+      - "8000:80"
+    networks:
+      - smartcity-net
+
+  php-river:
+    build: ./php-river
+    container_name: smartcity-php-river
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: ${MYSQL_DATABASE:-kelompok2}
+      DB_USERNAME: river
+      DB_PASSWORD: ${RIVER_DB_PASSWORD:-RiverSecret}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
+      APP_DEBUG: "false"
+    ports:
+      - "8002:80"
+    networks:
+      - smartcity-net
+
+  php-analytics:
+    build: ./php-analytics
+    container_name: smartcity-php-analytics
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-kelompok2}
+      DB_USER: analytics
+      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
+    ports:
+      - "8003:80"
+    networks:
+      - smartcity-net
+
+  python-ml-service:
+    build: ./python-ml-service
+    container_name: smartcity-python-ml
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mosquitto:
+        condition: service_started
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-RabbitSecret}
+      RABBITMQ_VHOST: /
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_TOPIC_PREFIX: kelompok2/sensors
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kelompok2}
+      RIVER_DB_USER: river
+      RIVER_DB_PASSWORD: ${RIVER_DB_PASSWORD:-RiverSecret}
+      ANALYTICS_DB_USER: analytics
+      ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
+    ports:
+      - "5001:8000"
+    networks:
+      - smartcity-net
+
+  express-gateway:
+    build: ./express-gateway
+    container_name: smartcity-gateway
+    restart: unless-stopped
+    depends_on:
+      - redis
+      - oauth-server
+      - php-user
+      - php-river
+      - php-analytics
+      - python-ml-service
+    environment:
+      PORT: 3000
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      OAUTH_URL: http://oauth-server:3002
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
+      PHP_USER_URL: http://php-user:80
+      PHP_RIVER_URL: http://php-river:80
+      PHP_ANALYTICS_URL: http://php-analytics:80
+      ML_URL: http://python-ml-service:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - smartcity-net
+
+networks:
+  smartcity-net:
+    driver: bridge
+
+volumes:
+  mysql-data:
+  rabbitmq-data:

@@ -21,7 +21,6 @@
  **/
 
 module.exports = {
-
 /*******************************************************************************
  * Flow File and User Directory Settings
  *  - flowFile
@@ -41,7 +40,7 @@ module.exports = {
      * node-red from being able to decrypt your existing credentials and they will be
      * lost.
      */
-    //credentialSecret: "a-secret-key",
+    credentialSecret: "kunci-rahasia-kelompok2",
 
     /** By default, the flow JSON will be formatted over multiple lines making
      * it easier to compare changes when using version control.

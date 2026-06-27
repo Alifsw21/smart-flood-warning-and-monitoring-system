@@ -11,7 +11,7 @@
         "id": "40c7d09bf38b6c41",
         "type": "mqtt-broker",
         "name": "",
-        "broker": "broker.emqx.io",
+        "broker": "broker.hivemq.com",
         "port": 1883,
         "clientid": "",
         "autoConnect": true,
@@ -44,44 +44,119 @@
         "z": "9e198921d7badae7",
         "name": "",
         "topic": "kelompok2/sensors/sungai",
-        "qos": "2",
-        "datatype": "auto-detect",
+        "qos": "1",
+        "datatype": "json",
         "broker": "40c7d09bf38b6c41",
         "nl": false,
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 470,
+        "x": 270,
         "y": 260,
         "wires": [
             [
-                "035bdf7f634a0e72"
+                "a3b0e1f6679a6ae8"
             ]
         ]
     },
     {
-        "id": "9bcef19334db25d8",
+        "id": "a3b0e1f6679a6ae8",
+        "type": "change",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 520,
+        "y": 260,
+        "wires": [
+            [
+                "1e48fef7ceee4735"
+            ]
+        ]
+    },
+    {
+        "id": "28b696ed12141cdb",
+        "type": "http request",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://express-gateway:3000/api/sensor",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 930,
+        "y": 260,
+        "wires": [
+            [
+                "dd83bd8d64b52cae"
+            ]
+        ]
+    },
+    {
+        "id": "3d8155b8dc409cac",
+        "type": "http request",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "method": "POST",
+        "ret": "obj",
+        "paytoqs": "ignore",
+        "url": "http://express-gateway:3000/api/sensor",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 910,
+        "y": 400,
+        "wires": [
+            [
+                "c528987b107c0791"
+            ]
+        ]
+    },
+    {
+        "id": "696c3173efed7ded",
         "type": "mqtt in",
         "z": "9e198921d7badae7",
         "name": "",
         "topic": "kelompok2/sensors/cuaca",
-        "qos": "2",
+        "qos": "1",
         "datatype": "auto-detect",
         "broker": "40c7d09bf38b6c41",
         "nl": false,
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 470,
-        "y": 360,
+        "x": 270,
+        "y": 400,
         "wires": [
             [
-                "8bf6d87713e86558"
+                "83934a6043ec8433"
             ]
         ]
     },
     {
-        "id": "074547c7fa8240bc",
+        "id": "dd83bd8d64b52cae",
         "type": "debug",
         "z": "9e198921d7badae7",
         "name": "debug 1",
@@ -89,16 +164,16 @@
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
+        "complete": "true",
+        "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 820,
+        "x": 1120,
         "y": 260,
         "wires": []
     },
     {
-        "id": "ec536cbe8c00a9b4",
+        "id": "c528987b107c0791",
         "type": "debug",
         "z": "9e198921d7badae7",
         "name": "debug 2",
@@ -106,42 +181,78 @@
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "true",
+        "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 840,
-        "y": 360,
+        "x": 1120,
+        "y": 400,
         "wires": []
     },
     {
-        "id": "035bdf7f634a0e72",
-        "type": "json",
+        "id": "1e48fef7ceee4735",
+        "type": "function",
         "z": "9e198921d7badae7",
-        "name": "",
-        "property": "payload",
-        "action": "obj",
-        "pretty": false,
-        "x": 670,
+        "name": "Pasang Token",
+        "func": "var token = global.get(\"authToken\");\n\nif (!token) {\n    node.warn(\"Token belum tersedia\");\n}\n\nmsg.headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" + token  \n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
         "y": 260,
         "wires": [
             [
-                "074547c7fa8240bc"
+                "28b696ed12141cdb"
             ]
         ]
     },
     {
-        "id": "8bf6d87713e86558",
-        "type": "json",
+        "id": "83934a6043ec8433",
+        "type": "change",
         "z": "9e198921d7badae7",
         "name": "",
-        "property": "payload",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
         "action": "",
-        "pretty": false,
-        "x": 690,
-        "y": 360,
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 500,
+        "y": 400,
         "wires": [
             [
-                "ec536cbe8c00a9b4"
+                "ed826bcca178f6c5"
+            ]
+        ]
+    },
+    {
+        "id": "ed826bcca178f6c5",
+        "type": "function",
+        "z": "9e198921d7badae7",
+        "name": "Pasang Token",
+        "func": "var token = global.get(\"authToken\");\n\nif (!token) {\n    node.warn(\"Token belum tersedia\");\n}\n\nmsg.headers = {\n    \"Content-Type\": \"application/json\",\n    \"Authorization\": \"Bearer \" + token  \n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 720,
+        "y": 400,
+        "wires": [
+            [
+                "3d8155b8dc409cac"
             ]
         ]
     }

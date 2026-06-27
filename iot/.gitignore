@@ -1,1 +1,6 @@
 passwd
+shared/secrets.h
+node-red-data/.config.*.json
+node-red-data/*.backup
+node-red-data/*cred.json
+node-red-data/.*cred.json.*

@@ -10,7 +10,7 @@ const bool IS_DEPLOYED = false;
 const char* mqtt_server = IS_DEPLOYED ? SECRET_MQTT_SERVER_PUB : "broker.hivemq.com";
 const int mqtt_port = 1883;
 const char* mqtt_user = SECRET_MQTT_USER_2;
-const char* mqtt_pass = SECRET_MQTTT_PASS_2;
+const char* mqtt_pass = SECRET_MQTT_PASS_2;
 const char* DEVICE_ID = "Sensor-banjir-cuaca2";
 
 unsigned long lastMsg = 0;
