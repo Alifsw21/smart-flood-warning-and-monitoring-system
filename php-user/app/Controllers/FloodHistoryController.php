@@ -5,7 +5,7 @@ namespace App\Controllers;
 use App\Models\FloodHistoryModel;
 use App\Validators\FloodHistoryValidator;
 
-class FloodHistoryController
+class FloodHistoryController extends BaseController
 {
     private $model;
     private $validator;
@@ -98,20 +98,5 @@ class FloodHistoryController
             'status' => 'error',
             'db' => 'disconnected',
         ]);
-    }
-
-    private function sendResponse($code, $status, $message, $data = null)
-    {
-        http_response_code($code);
-        header('Content-Type: application/json');
-        echo json_encode([
-            'status' => $status,
-            'code' => (int) $code,
-            'data' => $data,
-            'message' => $message,
-            'timestamp' => date('Y-m-d\TH:i:s.v\Z'),
-            'service' => 'php-user',
-        ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        exit;
     }
 }

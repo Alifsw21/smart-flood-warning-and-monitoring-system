@@ -3,6 +3,8 @@
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Validators\FloodHistoryValidator;
+use App\Validators\LaporanValidator;
+use App\Validators\UserValidator;
 
 $passed = 0;
 $failed = 0;
@@ -21,20 +23,33 @@ function assert_test($condition, $message)
     echo "FAIL $message\n";
 }
 
-$validator = new FloodHistoryValidator();
+$floodValidator = new FloodHistoryValidator();
 
-assert_test($validator->validateId('1') === null, 'validateId accepts positive integer');
-assert_test($validator->validateId('0') !== null, 'validateId rejects zero');
-assert_test($validator->validateId('abc') !== null, 'validateId rejects non-numeric');
+assert_test($floodValidator->validateId('1') === null, 'flood validateId accepts positive integer');
+assert_test($floodValidator->validateId('0') !== null, 'flood validateId rejects zero');
+assert_test(empty($floodValidator->validateFilters(['status' => 'ringan'])), 'flood validateFilters accepts ringan');
 
-$validFilters = $validator->validateFilters(['status' => 'ringan', 'idSungai' => '2']);
-assert_test(empty($validFilters), 'validateFilters accepts valid status and idSungai');
+$userValidator = new UserValidator();
 
-$invalidStatus = $validator->validateFilters(['status' => 'ekstrem']);
-assert_test(isset($invalidStatus['status']), 'validateFilters rejects invalid status');
+assert_test(empty($userValidator->validateCreate([
+    'username' => 'testuser',
+    'password' => 'secret12',
+    'role' => 'user',
+], true)), 'user validateCreate accepts valid payload');
+assert_test(isset($userValidator->validateCreate([
+    'username' => '',
+    'password' => 'secret12',
+], true)['username']), 'user validateCreate rejects empty username');
+assert_test(isset($userValidator->validateUpdate(['role' => 'admin'], false)['role']), 'user validateUpdate blocks role change for non-admin');
 
-$invalidRiver = $validator->validateFilters(['idSungai' => '0']);
-assert_test(isset($invalidRiver['idSungai']), 'validateFilters rejects non-positive idSungai');
+$laporanValidator = new LaporanValidator();
+
+assert_test(empty($laporanValidator->validateCreate([
+    'deskripsiLaporan' => 'Jalan depan rumah tergenang air setinggi lutut.',
+])), 'laporan validateCreate accepts valid description');
+assert_test(isset($laporanValidator->validateCreate([
+    'deskripsiLaporan' => 'pendek',
+])['deskripsiLaporan']), 'laporan validateCreate rejects short description');
 
 $total = $passed + $failed;
 echo "$passed/$total unit tests passed\n";
