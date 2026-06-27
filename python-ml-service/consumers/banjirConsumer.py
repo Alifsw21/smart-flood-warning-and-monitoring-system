@@ -1,24 +1,25 @@
-from pydantic import BaseModel
+import json
+import os
+import sys
+
 from dotenv import load_dotenv
 import pika
-import json
 import redis
-import joblib
-import mysql.connector
-import numpy as np
-import os
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from consumers.common import decode_message, normalize_banjir_payload
+from predictions import BanjirInput, load_models, predict_banjir
+from rabbitmq_topology import (
+    ROUTING_ANOMALY_ALERT,
+    ROUTING_TRAFFIC_NEW,
+    publish_event,
+    rabbitmq_parameters,
+    setup_events_topology,
+)
 
 load_dotenv()
 
-MYSQL_HOST = os.environ.get("MYSQL_HOST", "localhost")
-ANALYTICS_DB_USER = os.environ.get("ANALYTICS_DB_USER", "analytics")
-ANALYTICS_DB_PASSWORD = os.environ.get("ANALYTICS_DB_PASSWORD", "AnalyticSecret")
-MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "kelompok2")
-RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "127.0.0.1")
-RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
-RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "guest")
-RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
-RABBITMQ_VHOST = os.environ.get("RABBITMQ_VHOST", "/")
 REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
 
@@ -28,124 +29,53 @@ try:
 except Exception:
     redis_client = None
 
-def get_mysql_connection():
-    try:
-        return mysql.connector.connect(
-            host=MYSQL_HOST,
-            user=ANALYTICS_DB_USER,
-            password=ANALYTICS_DB_PASSWORD,
-            database=MYSQL_DATABASE
-        )
-    except Exception as e:
-        print(f"Gagal koneksi ke database: {str(e)}")
-        return None
-    
-model1 = joblib.load(os.path.join(os.path.dirname(__file__), '..', 'models', 'deteksi_banjir_berdasarkan_waterLevel.pkl'))
-model2 = joblib.load(os.path.join(os.path.dirname(__file__), '..', 'models', 'deteksi_banjir_berdasarkan_cuaca.pkl'))
+load_models()
 
-class SensorPrediksiBanjir(BaseModel):
-    idSungai: int
-    curahHujan: float = 0.0 # Rainfall_mm
-    tinggiAir: float = 0.0 # WaterLevel_m
-    kelembapanTanah: float = 0.0 # SoilMoisture_pct 
-    suhuMin: float = 25.0 # Tn
-    suhuMax: float = 32.0 # Tx
-    suhuRataRata: float = 28.0 # Tavg
-    kelembapanUdara: float = 77.0 # RH_avg
-    sunShine: float = 0.0 # ss
-    kecepatanAngin: float = 0.0 # ff_x
-    arahAngin: float = 0.0 # ddd_x
-    kecepatanRataRataAngin: float = 0.0 # ff_avg
-
-kredensial = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
-
-parameter = pika.ConnectionParameters(
-    host=RABBITMQ_HOST,
-    port=RABBITMQ_PORT,
-    virtual_host=RABBITMQ_VHOST,
-    credentials=kredensial
-)
-
-connection = pika.BlockingConnection(parameter)
-
+connection = pika.BlockingConnection(rabbitmq_parameters())
 channel = connection.channel()
-channel.queue_declare(queue='banjir_queue')
+setup_events_topology(channel)
 
-print("Consumer deteksi banjir stand-by")
+print(f"Consumer deteksi banjir stand-by on {ROUTING_TRAFFIC_NEW} (exchange city.events)")
 
-db_conn = get_mysql_connection()
 
 def callback(ch, method, properties, body):
-    global db_conn
     try:
-        raw_data = json.loads(body)
-        data = SensorPrediksiBanjir(**raw_data)
+        raw_data = decode_message(body)
+        data = BanjirInput(**normalize_banjir_payload(raw_data))
+        result = predict_banjir(data)
+        prediction = result["data"]
 
-        input_m1 = np.array([[data.curahHujan, data.tinggiAir, data.kelembapanTanah]])
-        input_m2 = np.array([[data.suhuMin, data.suhuMax, data.suhuRataRata, data.kelembapanUdara, data.sunShine, data.kecepatanAngin, data.arahAngin, data.kecepatanRataRataAngin]])
-
-        prob_m1 = model1.predict_proba(input_m1)[0][1]
-        prob_m2 = model2.predict_proba(input_m2)[0][1]
-
-        pred_m1 = 1 if prob_m1 >= 0.5 else 0
-        pred_m2 = 1 if prob_m2 >= 0.5 else 0
-
-        rata_prob = float((prob_m1 + prob_m2) / 2)
-        
-        if pred_m1 == 1 and pred_m2 == 1:
-            prediksi = "BENCANA"
-        elif pred_m1 == 1 or pred_m2 == 1:
-            prediksi = "WASPADA"
-        else:
-            prediksi = "NORMAL"
-
-        hasil_prediksi = {
-            "status": "success",
-            "analisis_ketinggian_air": "BANJIR" if pred_m1 == 1 else "AMAN",
-            "analisis_cuaca": "BANJIR" if pred_m2 == 1 else "AMAN",
-            "hasil_prediksi": prediksi,
-            "probabilitas": round(rata_prob, 2)
-        }
+        prediksi = prediction["hasil_prediksi"]
+        rata_prob = prediction["probabilitas"]
 
         if redis_client:
             redis_client.set("test_data_iot_di_ml", body.decode())
-            redis_client.set("status_banjir_terakhir", json.dumps(hasil_prediksi))
+            redis_client.set("status_banjir_terakhir", json.dumps(prediction))
 
-        if db_conn is None or not db_conn.is_connected():
-            db_conn = get_mysql_connection()
+        alert_payload = {
+            "event": "anomaly.alert",
+            "idSungai": data.idSungai,
+            "tipePeringatan": prediksi.lower(),
+            "nilaiProbabilitas": rata_prob,
+            "tinggiAir": data.tinggiAir,
+            "hasil_prediksi": prediksi,
+            "probabilitas": rata_prob,
+            "analisis_ketinggian_air": prediction["analisis_ketinggian_air"],
+            "analisis_cuaca": prediction["analisis_cuaca"],
+        }
+        publish_event(channel, ROUTING_ANOMALY_ALERT, alert_payload)
 
-        if db_conn:
-            cursor = db_conn.cursor()
-
-            query_peringatan = """
-                INSERT INTO analytics_peringatan (idSungai, tipePeringatan, nilaiProbabilitas)
-                VALUES (%s, %s, %s)
-            """
-            values_peringatan = (data.idSungai, prediksi.lower(), round(rata_prob, 2))
-            cursor.execute(query_peringatan, values_peringatan)
-            db_conn.commit()
-
-            if prediksi in ["WASPADA", "BENCANA"]:
-                if data.tinggiAir >= 3.5:
-                    status_riwayat = "tinggi"
-                elif data.tinggiAir >= 2.0:
-                    status_riwayat = "sedang"
-                else:
-                    status_riwayat = "ringan"
-                
-                query_riwayat = """
-                    INSERT INTO user_riwayatBanjir (idSungai, tinggiAir, status)
-                    VALUES (%s, %s, %s)
-                """
-                values_riwayat = (data.idSungai, data.tinggiAir, status_riwayat)
-                cursor.execute(query_riwayat, values_riwayat)
-                db_conn.commit()
-
-            cursor.close()
-
-            print(f"Berhasil memproses data. Status: {prediksi} (Probabilitas: {round(rata_prob * 100, 1)}%)")   
+        print(
+            f"Berhasil memproses data. Status: {prediksi} "
+            f"(Probabilitas: {round(rata_prob * 100, 1)}%) — alert published"
+        )
     except Exception as e:
         print(f"Gagal memproses pesan: {str(e)}")
 
-channel.basic_consume(queue='banjir_queue', on_message_callback=callback, auto_ack=True)
+
+channel.basic_consume(
+    queue=ROUTING_TRAFFIC_NEW,
+    on_message_callback=callback,
+    auto_ack=True,
+)
 channel.start_consuming()

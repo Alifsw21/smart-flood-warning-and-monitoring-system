@@ -19,13 +19,22 @@ class RabbitMQPublisher {
         $this->channel = $this->connection->channel();
     }
 
-    public function publish($queueName, $dataArray) {
-        $this->channel->queue_declare($queueName, false, true, false, false);
+    public function publish($routingKey, $dataArray) {
+        $exchange = 'city.events';
+        $this->channel->exchange_declare($exchange, 'topic', false, true, false);
+        $this->channel->queue_declare($routingKey, false, true, false, false);
+        $this->channel->queue_bind($routingKey, $exchange, $routingKey);
 
         $jsonMessage = json_encode($dataArray);
         $msg = new AMQPMessage($jsonMessage, ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
 
-        $this->channel->basic_publish($msg, '', $queueName);
+        $this->channel->basic_publish($msg, $exchange, $routingKey);
+    }
+
+    public function publishMany(array $events): void {
+        foreach ($events as $routingKey => $dataArray) {
+            $this->publish($routingKey, $dataArray);
+        }
     }
 
     public function consume($queueName, $callbackFunction) {

@@ -106,9 +106,11 @@ class SensorReadingController extends BaseController {
                 'timestamp' => (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z'),
             ];
 
-            $this->publishEvent('river_sensor_events', $eventPayload);
-            $this->publishEvent('air.new', $eventPayload);
-            $this->publishEvent('traffic.new', $eventPayload);
+            $this->publishEvents([
+                'river_sensor_events' => $eventPayload,
+                'air.new' => $eventPayload,
+                'traffic.new' => $eventPayload,
+            ]);
 
             $this->sendResponse(201, true, "Data telemetri IoT berhasil disimpan", $record);
         } catch (\InvalidArgumentException $e) {

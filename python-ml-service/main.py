@@ -19,6 +19,13 @@ from predictions import (
     predict_banjir,
     predict_curah_hujan,
 )
+from rabbitmq_topology import (
+    ROUTING_AIR_NEW,
+    ROUTING_TRAFFIC_NEW,
+    publish_event,
+    rabbitmq_credentials,
+    setup_events_topology,
+)
 
 load_dotenv()
 
@@ -42,16 +49,14 @@ except Exception:
 latest_data = {"Node1": None, "Node2": None}
 
 def start_background_worker():
-    rmq_credentials = pika.PlainCredentials(RABBITMQ_USER, RABBITMQ_PASSWORD)
     rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(
         host=RABBITMQ_HOST,
         port=RABBITMQ_PORT,
         virtual_host=RABBITMQ_VHOST,
-        credentials=rmq_credentials
+        credentials=rabbitmq_credentials(),
     ))
     rmq_channel = rmq_conn.channel()
-    rmq_channel.queue_declare(queue='sensor_queue')
-    rmq_channel.queue_declare(queue='banjir_queue')
+    setup_events_topology(rmq_channel)
 
     def on_connect(client, userdata, flags, rc):
         print(f"Terhubung ke HiveMQ dengan kode: {rc}")
@@ -75,8 +80,8 @@ def start_background_worker():
                 banjir_payload = gabung.copy()
                 banjir_payload['idSungai'] = gabung["idNode"]
 
-                rmq_channel.basic_publish(exchange='', routing_key='banjir_queue', body=json.dumps(banjir_payload))
-                rmq_channel.basic_publish(exchange='', routing_key='sensor_queue', body=json.dumps(gabung))
+                publish_event(rmq_channel, ROUTING_TRAFFIC_NEW, banjir_payload)
+                publish_event(rmq_channel, ROUTING_AIR_NEW, gabung)
 
                 print("Data gabungan berhasil dikirim ke antrean RabbitMQ")
                 latest_data = {"Node1": None, "Node2": None}
