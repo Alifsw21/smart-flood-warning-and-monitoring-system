@@ -13,4 +13,5 @@ resources:
   - php-deployments.yaml
   - python-ml-deployment.yaml
   - gateway-deployment.yaml
+  - php-analytics-consumer-deployment.yaml
   - hpa.yaml

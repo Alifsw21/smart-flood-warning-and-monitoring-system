@@ -102,6 +102,10 @@ assert_test(count($model->getAll(['tipePeringatan' => 'bencana'])) === 2, 'getAl
 assert_test(count($model->getAll(['idSungai' => 1])) === 2, 'getAll() filters idSungai');
 assert_test(count($model->getAll(['from' => '2025-01-18', 'to' => '2025-01-26'])) === 2, 'getAll() filters date range');
 
+$active = $model->getActive([]);
+assert_test(count($active) === 3, 'getActive([]) returns only waspada/bencana rows');
+assert_test(count($model->getActive(['idSungai' => 1])) === 1, 'getActive() filters idSungai');
+
 $row = $model->getById(1);
 assert_test($row !== null && array_key_exists('lokasiSungai', $row), 'getById(1) returns row with lokasiSungai');
 assert_test($model->getById(999) === null, 'getById(999) returns null');

@@ -29,6 +29,21 @@ class PeringatanController {
         }
     }
 
+    public function activeAlerts() {
+        $errors = $this->validator->validateFilters($_GET);
+
+        if (!empty($errors)) {
+            $this->sendResponse(400, "error", "Filter Tidak Valid.", $errors);
+        }
+
+        try {
+            $data = $this->model->getActive($_GET);
+            $this->sendResponse(200, "success", "Berhasil Mengambil Alert Aktif.", $data);
+        } catch (\PDOException $e) {
+            $this->sendResponse(500, "error", "Terjadi Kesalahan Pada Database.");
+        }
+    }
+
     public function show($id) {
         $error = $this->validator->validateId($id);
 

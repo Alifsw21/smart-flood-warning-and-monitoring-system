@@ -312,3 +312,20 @@ INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHu
 INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHujan, suhuRataRata, kelembapanUdara, kecepatanAngin, arahAngin, recorded_at) VALUES (198, 7, 3.95, 11.4, 20.5, 31.2, 88.5, 3.9, 182.7, '2026-06-26 15:31:52');
 INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHujan, suhuRataRata, kelembapanUdara, kecepatanAngin, arahAngin, recorded_at) VALUES (199, 4, 1.9, 37.2, 12.1, 28.3, 56.4, 11.2, 320.8, '2026-06-26 16:31:52');
 INSERT INTO river_sensorReading (id, idNode, tinggiAir, kelembapanTanah, curahHujan, suhuRataRata, kelembapanUdara, kecepatanAngin, arahAngin, recorded_at) VALUES (200, 6, 3.29, 35.0, 21.6, 36.2, 55.7, 13.4, 164.9, '2026-06-26 17:31:52');
+
+-- 7. Data Peringatan Banjir (php-analytics — Spec §8 alerts / §7.3 GET /api/environment/alerts)
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (1, 1, 'normal', 0.12, '2026-06-20 08:00:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (2, 2, 'normal', 0.18, '2026-06-20 09:15:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (3, 3, 'waspada', 0.58, '2026-06-21 14:30:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (4, 1, 'waspada', 0.62, '2026-06-22 06:45:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (5, 4, 'normal', 0.09, '2026-06-22 11:00:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (6, 5, 'bencana', 0.88, '2026-06-23 02:20:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (7, 3, 'bencana', 0.91, '2026-06-23 03:10:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (8, 2, 'waspada', 0.55, '2026-06-24 16:00:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (9, 1, 'normal', 0.15, '2026-06-25 07:30:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (10, 4, 'waspada', 0.67, '2026-06-25 18:45:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (11, 5, 'waspada', 0.71, '2026-06-26 05:00:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (12, 1, 'bencana', 0.86, '2026-06-26 09:30:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (13, 2, 'normal', 0.11, '2026-06-26 12:00:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (14, 3, 'normal', 0.22, '2026-06-26 15:20:00');
+INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (15, 4, 'bencana', 0.93, '2026-06-26 20:10:00');

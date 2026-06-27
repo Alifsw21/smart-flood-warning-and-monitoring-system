@@ -80,7 +80,9 @@ if ! kill -0 "$server_pid" 2>/dev/null; then
 fi
 
 assert_status GET /nope 404 "GET /nope returns 404"
+assert_status GET /api/environment/alerts 500 "GET /api/environment/alerts returns 500 without DB"
 assert_status POST /api/analytics/peringatan 405 "POST /api/analytics/peringatan returns 405"
+assert_status POST /api/environment/alerts 405 "POST /api/environment/alerts returns 405"
 assert_status DELETE /api/analytics/peringatan/5 403 "DELETE without role header returns 403"
 assert_not_status DELETE /api/analytics/peringatan/5 403 "DELETE with admin role passes admin gate" -H "X-User-Role: admin"
 assert_status GET /api/analytics/peringatan/abc 400 "GET invalid id returns 400"

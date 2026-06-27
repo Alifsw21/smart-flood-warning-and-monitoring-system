@@ -18,6 +18,7 @@ build express-gateway smartcity/api-gateway:latest
 build php-user smartcity/php-user:latest
 build php-river smartcity/php-river:latest
 build php-analytics smartcity/php-analytics:latest
+docker build -f php-analytics/Dockerfile.consumer -t smartcity/php-analytics-consumer:latest php-analytics
 build python-ml-service smartcity/python-ml-service:latest
 
 echo "Done. Images ready for imagePullPolicy: IfNotPresent on the cluster node."

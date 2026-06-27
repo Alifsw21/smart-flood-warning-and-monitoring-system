@@ -112,6 +112,7 @@ const bootstrap = async () => {
   app.use('/iot/air', proxyToPath(upstreams.river, '/api/environment/readings'));
 
   app.use('/api/river', proxyWithPrefix(upstreams.river, '/api/river'));
+  app.use('/api/environment/alerts', proxyWithPrefix(upstreams.analytics, '/api/environment/alerts'));
   app.use('/api/environment', proxyWithPrefix(upstreams.river, '/api/environment'));
   app.use('/api/traffic', proxyWithPrefix(upstreams.river, '/api/traffic'));
   app.use('/api/analytics', proxyWithPrefix(upstreams.analytics, '/api/analytics'));
