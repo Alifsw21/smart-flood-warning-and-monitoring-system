@@ -1,0 +1,30 @@
+# Spec §6.1 — Ingress routes external traffic to API Gateway (S5 demo entry point)
+# Requires an Ingress controller (e.g. nginx-ingress) on the cluster.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: smartcity-ingress
+  namespace: smartcity
+  labels:
+    app.kubernetes.io/part-of: smart-flood-warning
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: smartcity.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-gateway-svc
+                port:
+                  number: 80
+  # Optional bonus (Spec §11.1): uncomment for TLS demo
+  # tls:
+  #   - hosts:
+  #       - smartcity.local
+  #     secretName: smartcity-tls

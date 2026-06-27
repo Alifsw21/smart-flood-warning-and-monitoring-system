@@ -1,0 +1,143 @@
+# Spec §6.1 — Python ML FastAPI service (Per. 11) + HPA target
+apiVersion: v1
+kind: Service
+metadata:
+  name: python-ml-svc
+  namespace: smartcity
+  labels:
+    app: python-ml
+    tier: ml
+spec:
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  selector:
+    app: python-ml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-ml
+  namespace: smartcity
+  labels:
+    app: python-ml
+    tier: ml
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-ml
+  template:
+    metadata:
+      labels:
+        app: python-ml
+        tier: ml
+    spec:
+      containers:
+        - name: python-ml
+          image: smartcity/python-ml-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: RABBITMQ_VHOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_VHOST
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: REDIS_PORT
+            - name: MQTT_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MQTT_HOST
+            - name: MQTT_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MQTT_PORT
+            - name: MQTT_TOPIC_PREFIX
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MQTT_TOPIC_PREFIX
+            - name: MYSQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_HOST
+            - name: MYSQL_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_DATABASE
+            - name: RIVER_DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RIVER_DB_USER
+            - name: RIVER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RIVER_DB_PASSWORD
+            - name: ANALYTICS_DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: ANALYTICS_DB_USER
+            - name: ANALYTICS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: ANALYTICS_DB_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 45
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
