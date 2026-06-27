@@ -1,97 +1,115 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const User = require('../models/user');
 const config = require('../config');
+const OAuthService = require('../services/oauthService');
+const User = require('../models/user');
 
 const router = express.Router();
 
-function authenticateJWT(req, res, next) {
+const authenticateAccessToken = async (req, res, next) => {
     const authHeader = req.headers.authorization;
 
-    if (!authHeader) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
             status: 'error',
-            message: 'Token tidak ditemukan'
+            message: 'Token tidak ditemukan',
         });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.slice(7);
 
-    jwt.verify(token, config.JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({
-                status: 'error',
-                message: 'Token tidak valid'
-            });
+    try {
+        const stored = await OAuthService.findActiveAccessToken(token);
+
+        if (stored) {
+            req.user = {
+                id: stored.user_id,
+                role: stored.user_role || 'user',
+            };
+            return next();
         }
 
-        req.user = decoded;
-        next();
-    });
-}
+        const decoded = jwt.verify(token, config.JWT_SECRET);
+        req.user = {
+            id: decoded.id,
+            role: decoded.role,
+        };
+        return next();
+    } catch {
+        return res.status(403).json({
+            status: 'error',
+            message: 'Token tidak valid',
+        });
+    }
+};
 
 router.post('/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
+    const { username, password } = req.body;
 
-        if (!username || !password) {
-            return res.status(400).json({
-                status: 'error',
-                message: 'Username dan password wajib diisi'
-            });
-        }
+    if (!username || !password) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'Username dan password wajib diisi',
+        });
+    }
+
+    try {
+        const tokenResponse = await OAuthService.passwordGrant({
+            grant_type: 'password',
+            client_id: config.DEFAULT_CLIENT_ID,
+            client_secret: config.DEFAULT_CLIENT_SECRET,
+            username,
+            password,
+        });
 
         const user = await User.findByUsername(username);
 
-        if (!user) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'Username atau password salah'
-            });
-        }
-
-        const validPassword = await bcrypt.compare(password, user.password);
-
-        if (!validPassword) {
-            return res.status(401).json({
-                status: 'error',
-                message: 'Username atau password salah'
-            });
-        }
-
-        const token = jwt.sign(
-            {
-                id: user.id,
-                role: user.role
-            },
-            config.JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
         return res.json({
             status: 'success',
-            token,
-            id: user.id,
-            username: user.username,
-            role: user.role
+            token: tokenResponse.access_token,
+            access_token: tokenResponse.access_token,
+            refresh_token: tokenResponse.refresh_token,
+            expires_in: tokenResponse.expires_in,
+            token_type: tokenResponse.token_type,
+            id: user?.id,
+            username: user?.username,
+            role: user?.role,
         });
-    } catch (error) {
-        console.error(error);
-
-        return res.status(500).json({
+    } catch {
+        return res.status(401).json({
             status: 'error',
-            message: error.message
+            message: 'Username atau password salah',
         });
     }
 });
 
-router.get('/profile', authenticateJWT, (req, res) => {
-    return res.json({
-        status: 'success',
-        user: req.user
-    });
+router.get('/profile', authenticateAccessToken, async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'User tidak ditemukan',
+            });
+        }
+
+        return res.json({
+            status: 'success',
+            user: {
+                id: user.id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+            },
+        });
+    } catch (error) {
+        return res.status(500).json({
+            status: 'error',
+            message: error.message,
+        });
+    }
 });
 
-module.exports = { router, authenticateJWT };
+module.exports = { router, authenticateAccessToken };

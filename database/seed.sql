@@ -81,6 +81,14 @@ INSERT INTO user_user (id, username, email, password, role, waktuDibuat) VALUES 
 INSERT INTO user_user (id, username, email, password, role, waktuDibuat) VALUES (49, 'ayuwijaya49', 'ayuwijaya49@kelompok2.com', '$2y$10$dummyhashpassword12345678', 'user', '2026-06-04 04:31:52');
 INSERT INTO user_user (id, username, email, password, role, waktuDibuat) VALUES (50, 'agusputra50', 'agusputra50@kelompok2.com', '$2y$10$dummyhashpassword12345678', 'user', '2026-06-24 09:31:52');
 
+-- 4b. OAuth clients (§4.2) — dev secrets documented in oauth-server/.env.example
+INSERT INTO auth_oauthClient (client_id, client_secret, grant_types) VALUES
+('gateway', '$2b$10$hQw.1AOYD/hxxbZeDmmG4u9m5b/WYiaqgQplQZbbooAULqKpLLP12', 'client_credentials'),
+('citizen-app', '$2b$10$dkSBHgL1NLSy984evmHz9u0PJmYny2BhA.hyVnhdTMPvXSFFcqodu', 'password,refresh_token');
+
+-- Dev credentials for OAuth password grant: hadiputra2 / kelompok2dev (user id 2)
+UPDATE user_user SET password = '$2b$10$L9laEb7yUiMFIO3xJgaKTue1/BtNBCAK2dLqKnS7.5QT6G1TNAneq' WHERE id = 2;
+
 -- 5. Data Laporan
 INSERT INTO user_laporan (id, idPengguna, deskripsiLaporan, waktuDibuat) VALUES (1, 8, 'Data ketinggian air di aplikasi terlambat update dibandingkan kondisi sungai aslinya.', '2026-06-07 23:31:52');
 INSERT INTO user_laporan (id, idPengguna, deskripsiLaporan, waktuDibuat) VALUES (2, 23, 'Sistem AI memprediksi status Normal, namun air selokan sudah mulai meluap ke jalan.', '2026-05-27 01:31:52');
