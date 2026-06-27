@@ -63,7 +63,7 @@ const bootstrap = async () => {
   app.get('/health', async (_req, res) => {
     const checks = [
       { name: 'oauth-server', url: `${upstreams.oauth}/` },
-      { name: 'php-user', url: `${upstreams.user}/index.php` },
+      { name: 'php-user', url: `${upstreams.user}/health` },
       { name: 'php-river', url: `${upstreams.river}/health` },
       { name: 'php-analytics', url: `${upstreams.analytics}/health` },
       { name: 'python-ml-service', url: `${upstreams.ml}/health` },
