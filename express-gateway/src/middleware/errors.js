@@ -9,10 +9,18 @@ const gatewayError = (res, code, message) => {
   });
 };
 
-const proxyErrorHandler = (_err, _req, res) => {
-  if (!res.headersSent) {
-    gatewayError(res, 502, 'Upstream service unavailable');
+const proxyErrorHandler = (err, _req, res) => {
+  if (res.headersSent) {
+    return;
   }
+
+  const isTimeout = err?.code === 'ECONNABORTED' || err?.code === 'ETIMEDOUT';
+  const statusCode = isTimeout ? 503 : 502;
+  const message = isTimeout
+    ? 'Upstream service timed out'
+    : 'Upstream service unavailable';
+
+  gatewayError(res, statusCode, message);
 };
 
 module.exports = { gatewayError, proxyErrorHandler };
