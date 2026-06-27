@@ -20,8 +20,6 @@ const sendJson = (res, code, body) => {
   res.status(code).json(body);
 };
 
-app.use(express.json());
-
 app.get('/health', async (_req, res) => {
   const checks = [
     { name: 'oauth-server', url: `${upstreams.oauth}/` },
