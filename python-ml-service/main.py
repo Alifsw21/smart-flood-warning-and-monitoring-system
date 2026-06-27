@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
@@ -7,6 +9,16 @@ import redis
 import json
 import pika
 import os
+
+from predictions import (
+    BanjirInput,
+    CurahHujanInput,
+    load_models,
+    loaded_model_names,
+    model_load_error,
+    predict_banjir,
+    predict_curah_hujan,
+)
 
 load_dotenv()
 
@@ -79,6 +91,7 @@ def start_background_worker():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    load_models()
     threading.Thread(target=start_background_worker, daemon=True).start()
     yield
 
@@ -100,10 +113,13 @@ def fetch_redis_data(key: str, empty_msg: str):
 
 @app.get("/health")
 async def health_check():
+    models = loaded_model_names()
     return {
-        "status": "ok", 
-        "service": "ready", 
-        "redis_connected": redis_client is not None
+        "status": "ok" if models else "degraded",
+        "service": "python-ml-service",
+        "models": models,
+        "redis_connected": redis_client is not None,
+        "model_error": model_load_error(),
     }
 
 @app.get("/api/sensor")
@@ -120,3 +136,27 @@ async def get_realtime():
 @app.get("/predict/realtime/curah-hujan")
 async def get_realtime_hujan():
     return fetch_redis_data("estimasi_hujan_terakhir", "Belum ada data sensor curah hujan")
+
+
+def _timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+@app.post("/predict/banjir")
+async def post_predict_banjir(payload: BanjirInput):
+    try:
+        result = predict_banjir(payload)
+        result["timestamp"] = _timestamp()
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/predict/curah-hujan")
+async def post_predict_curah_hujan(payload: CurahHujanInput):
+    try:
+        result = predict_curah_hujan(payload)
+        result["timestamp"] = _timestamp()
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
