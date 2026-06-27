@@ -1,59 +1,157 @@
-<?php 
-
-error_reporting(E_ALL);
-ini_set('display_errors', '1');
-
-header("Content-Type: application/json");
-date_default_timezone_set('Asia/Jakarta');
+<?php
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../');
-$dotenv->load();
+$dotenv->safeLoad();
+
+$isDebug = ($_ENV['APP_DEBUG'] ?? 'false') === 'true';
+error_reporting(E_ALL);
+ini_set('display_errors', $isDebug ? '1' : '0');
+
+header('Content-Type: application/json');
+date_default_timezone_set('Asia/Jakarta');
 
 require_once __DIR__ . '/../database/database.php';
 $dbInstance = new Database();
 $db = $dbInstance->getConnection();
 
-$requestHeaders = array_change_key_case(getallheaders(), CASE_LOWER);
+$requestHeaders = function_exists('getallheaders') ? array_change_key_case(getallheaders(), CASE_LOWER) : [];
 $userRole = $requestHeaders['x-user-role'] ?? 'pengguna';
-$method = $_SERVER['REQUEST_METHOD'];
+$method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+$path = '/' . trim($requestPath, '/');
 
-$url = rtrim(parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH), '/');
-$id = $_GET['id'] ?? null;
-
-$controller = new \App\Controllers\SensorNodeController($db);
-
-if ($url === '/api/river/sensors') {
-    switch ($method) {
-        case 'GET':
-            $controller->index();
-            break;
-        case 'POST':
-            $input = json_decode(file_get_contents('php://input'), true);
-            $controller->store($input, $userRole);
-            break;
-        case 'PUT':
-            $input = json_decode(file_get_contents('php://input'), true);
-            $controller->update($id, $input, $userRole);
-            break;
-        case 'DELETE':
-            $controller->delete($id, $userRole);
-            break;
-        default:
-            http_response_code(405);
-            echo json_encode([
-                "status" => "error",
-                "code" => 405,
-                "message" => "Method HTTP Tidak Diizinkan."
-            ]);
-            break;
-    }
-} else {
-    http_response_code(404);
-    echo json_encode([
-        "status" => "error",
-        "code" => 404,
-        "message" => "Endpoint Tidak Ditemukan."
-    ]);
+if ($path === '//') {
+    $path = '/';
 }
+
+$sendRouterResponse = function (int $code, string $message): void {
+    http_response_code($code);
+    echo json_encode([
+        'status' => 'error',
+        'code' => $code,
+        'data' => null,
+        'message' => $message,
+        'timestamp' => (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z'),
+        'service' => 'php-river',
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+};
+
+$sendHealthResponse = function (int $code, bool $healthy, string $message): void {
+    http_response_code($code);
+    echo json_encode([
+        'status' => $healthy ? 'success' : 'error',
+        'code' => $code,
+        'data' => ['database' => $healthy ? 'connected' : 'disconnected'],
+        'message' => $message,
+        'timestamp' => (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z'),
+        'service' => 'php-river',
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    exit;
+};
+
+if ($path === '/health') {
+    if ($method !== 'GET') {
+        $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+    }
+
+    try {
+        $db->query('SELECT 1');
+        $sendHealthResponse(200, true, 'Service php-river sehat');
+    } catch (Throwable $e) {
+        $sendHealthResponse(503, false, 'Database tidak tersedia');
+    }
+}
+
+$sensorNodeController = new \App\Controllers\SensorNodeController($db);
+$zoneController = new \App\Controllers\ZoneController($db);
+$sungaiController = new \App\Controllers\SungaiController($db);
+$readingController = new \App\Controllers\SensorReadingController($db);
+
+if ($path === '/api/river/sensors') {
+    if ($method === 'GET') {
+        $sensorNodeController->index();
+    }
+    if ($method === 'POST') {
+        $sensorNodeController->store($userRole);
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+if (preg_match('#^/api/river/sensors/([^/]+)$#', $path, $matches)) {
+    $id = $matches[1];
+
+    if ($method === 'PUT') {
+        $sensorNodeController->update($id, $userRole);
+    }
+    if ($method === 'DELETE') {
+        $sensorNodeController->delete($id, $userRole);
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+if ($path === '/api/river/zones') {
+    if ($method === 'GET') {
+        $zoneController->index();
+    }
+    if ($method === 'POST') {
+        $zoneController->store();
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+if (preg_match('#^/api/river/zones/([^/]+)$#', $path, $matches)) {
+    $id = $matches[1];
+
+    if ($method === 'GET') {
+        $zoneController->show($id);
+    }
+    if ($method === 'PUT') {
+        $zoneController->update($id);
+    }
+    if ($method === 'DELETE') {
+        $zoneController->destroy($id);
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+if ($path === '/api/river/sungai') {
+    if ($method === 'GET') {
+        $sungaiController->index();
+    }
+    if ($method === 'POST') {
+        $sungaiController->store();
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+if (preg_match('#^/api/river/sungai/([^/]+)$#', $path, $matches)) {
+    $id = $matches[1];
+
+    if ($method === 'GET') {
+        $sungaiController->show($id);
+    }
+    if ($method === 'PUT') {
+        $sungaiController->update($id);
+    }
+    if ($method === 'DELETE') {
+        $sungaiController->destroy($id);
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+$readingPaths = ['/api/river/readings', '/api/environment/readings'];
+
+if (in_array($path, $readingPaths, true)) {
+    if ($method === 'GET') {
+        $readingController->index();
+    }
+    if ($method === 'POST') {
+        $readingController->store();
+    }
+    $sendRouterResponse(405, 'Method HTTP Tidak Diizinkan.');
+}
+
+$sendRouterResponse(404, 'Endpoint Tidak Ditemukan.');

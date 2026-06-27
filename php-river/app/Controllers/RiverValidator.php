@@ -4,14 +4,26 @@ namespace App\Controllers;
 
 class RiverValidator {
 
+    private static function isBlank($value): bool {
+        if ($value === null) {
+            return true;
+        }
+
+        if (is_string($value)) {
+            return trim($value) === '';
+        }
+
+        return $value === '';
+    }
+
     // Validasi input untuk SungaiController (store & update)
     public static function validateSungai(array $data): array {
         $errors = [];
 
-        if (!isset($data['zoneId']) || trim($data['zoneId']) === '') {
+        if (!isset($data['zoneId']) || self::isBlank($data['zoneId'])) {
             $errors[] = "Field 'zoneId' wajib diisi.";
         }
-        if (!isset($data['lokasiSungai']) || trim($data['lokasiSungai']) === '') {
+        if (!isset($data['lokasiSungai']) || self::isBlank($data['lokasiSungai'])) {
             $errors[] = "Field 'lokasiSungai' wajib diisi.";
         }
 
@@ -26,7 +38,7 @@ class RiverValidator {
     public static function validateZone(array $data): array {
         $errors = [];
 
-        if (!isset($data['nama_kota']) || trim($data['nama_kota']) === '') {
+        if (!isset($data['nama_kota']) || self::isBlank($data['nama_kota'])) {
             $errors[] = "Field 'nama_kota' wajib diisi.";
         }
 
@@ -45,8 +57,8 @@ class RiverValidator {
             'idNode', 'tinggiAir', 'kelembapanTanah', 'curahHujan', 'suhuRataRata', 'kelembapanUdara', 'kecepatanAngin'
         ];
 
-        foreach($required as $field) {
-            if (!isset($data[$field]) || trim($data[$field]) === '') {
+        foreach ($required as $field) {
+            if (!isset($data[$field]) || self::isBlank($data[$field])) {
                 $errors[] = "Field '$field' wajib diisi.";
             }
         }
@@ -74,8 +86,8 @@ class RiverValidator {
         $errors = [];
         $required = ['idSungai', 'idStation', 'namaNode', 'posisi', 'elevasi'];
 
-        foreach($required as $field) {
-            if (!isset($data[$field]) || trim($data[$field]) === '') {
+        foreach ($required as $field) {
+            if (!isset($data[$field]) || self::isBlank($data[$field])) {
                 $errors[] = "Field '$field' wajib diisi.";
             }
         }
