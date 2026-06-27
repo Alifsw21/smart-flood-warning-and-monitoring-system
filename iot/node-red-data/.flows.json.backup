@@ -1,0 +1,148 @@
+[
+    {
+        "id": "9e198921d7badae7",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "40c7d09bf38b6c41",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "broker.emqx.io",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "3c05c4527a151d2d",
+        "type": "mqtt in",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "topic": "kelompok2/sensors/sungai",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "40c7d09bf38b6c41",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 470,
+        "y": 260,
+        "wires": [
+            [
+                "035bdf7f634a0e72"
+            ]
+        ]
+    },
+    {
+        "id": "9bcef19334db25d8",
+        "type": "mqtt in",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "topic": "kelompok2/sensors/cuaca",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "40c7d09bf38b6c41",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 470,
+        "y": 360,
+        "wires": [
+            [
+                "8bf6d87713e86558"
+            ]
+        ]
+    },
+    {
+        "id": "074547c7fa8240bc",
+        "type": "debug",
+        "z": "9e198921d7badae7",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 820,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "ec536cbe8c00a9b4",
+        "type": "debug",
+        "z": "9e198921d7badae7",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 360,
+        "wires": []
+    },
+    {
+        "id": "035bdf7f634a0e72",
+        "type": "json",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 670,
+        "y": 260,
+        "wires": [
+            [
+                "074547c7fa8240bc"
+            ]
+        ]
+    },
+    {
+        "id": "8bf6d87713e86558",
+        "type": "json",
+        "z": "9e198921d7badae7",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 690,
+        "y": 360,
+        "wires": [
+            [
+                "ec536cbe8c00a9b4"
+            ]
+        ]
+    }
+]

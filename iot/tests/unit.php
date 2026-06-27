@@ -31,14 +31,24 @@ assertTest(abs(calculateWaterLevel($durationNormal) - 3.3) < 0.01, "Logika konve
 $durasiJauh = 40000;
 assertTest(calculateWaterLevel($durasiJauh) == 0.0, "Nilai water level tidak boleh negatif");
 
-function validateTemperatureRange($t_avg) {
-    $tn = $t_avg - 2.0;
-    $tx = $t_avg + 3.0;
-
-    return ($tx > $tn) && ($tx > $t_avg) && ($tn < $t_avg);
+function calculateSoilMoisture($raw_pot) {
+    return ($raw_pot / 4095.0) * 100.0;
 }
+assertTest(abs(calculateSoilMoisture(2047) - 49.98) < 0.1, "Kalkulasi kelembapan tanah rata-rata");
 
-assertTest(validateTemperatureRange(28.5), "Kalkulasi Suhu Maksimal selalu lebih tinggi dari suhu minimum");
+function validateTemperatureRange($t_avg) {
+    return [
+        'tn' => $t_avg - 2.0,
+        'tx' => $t_avg + 3.0
+    ];
+}
+$tempRange = getTemperatureRange(28.5);
+assertTest(($tempRange['tn'] == 26.5) && ($tempRange['tx'] == 31.5), "Kalkulasi suhu maksimal dan minimal");
+
+function calculateRainfall($raw_pot) {
+    return ($raw_pot / 4095.0) * 50.0;
+}
+assertTest(abs(calculateRainfall(4095) - 50.0) < 0.01, "Kalkulasi curah Hujan Maksimal");
 
 $mockPayloadNode2 = json_decode('{"idNode":2,"curahHujan":25.5,"suhuMin":26.5,"suhuMax":31.5,"suhuRataRata":28.5}', true);
 assertTest(
@@ -47,6 +57,6 @@ assertTest(
 );
 
 echo "\n=============================================\n";
-echo "Total Tes GagalL $failed\n";
+echo "Total Tes Gagal $failed\n";
 
 exit($failed > 0 ? 1 : 0);
