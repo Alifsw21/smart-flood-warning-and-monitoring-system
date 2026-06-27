@@ -47,6 +47,23 @@ class LaporanValidator
             $errors['idPengguna'] = 'idPengguna Harus Berupa Bilangan Bulat Positif.';
         }
 
+        if (isset($filters['status']) && $filters['status'] !== '' && !in_array($filters['status'], ['pending', 'in_progress', 'resolved', 'rejected'], true)) {
+            $errors['status'] = 'status Tidak Valid.';
+        }
+
+        return $errors;
+    }
+
+    public function validateStatusUpdate(array $data)
+    {
+        $errors = [];
+
+        if (empty($data['status'])) {
+            $errors['status'] = 'Status Wajib Diisi.';
+        } elseif (!in_array($data['status'], ['pending', 'in_progress', 'resolved', 'rejected'], true)) {
+            $errors['status'] = 'Status Harus pending, in_progress, resolved, atau rejected.';
+        }
+
         return $errors;
     }
 }

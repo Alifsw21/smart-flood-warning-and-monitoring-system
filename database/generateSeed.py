@@ -84,6 +84,36 @@ def generate():
                     f"VALUES ({i}, {id_node_rand}, {tinggi_air}, {kelembapan_tanah}, {curah_hujan}, {suhu}, {kelembapan_udara}, {kecepatan_angin}, {arah}, '{waktu_rekam.strftime('%Y-%m-%d %H:%M:%S')}');\n")
         f.write("\n")
 
+        f.write("-- 7. Riwayat Banjir\n")
+        statuses = ['ringan', 'sedang', 'tinggi']
+        for i in range(1, 11):
+            id_sungai = random.randint(1, 5)
+            tinggi = round(random.uniform(1.2, 6.5), 1)
+            status = random.choice(statuses)
+            waktu = sekarang - timedelta(days=random.randint(1, 20), hours=random.randint(0, 23))
+            f.write(
+                f"INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) "
+                f"VALUES ({i}, {id_sungai}, {tinggi}, '{status}', '{waktu.strftime('%Y-%m-%d %H:%M:%S')}');\n"
+            )
+        f.write("\n")
+
+        f.write("-- 8. Notifikasi Warga\n")
+        for i in range(1, 9):
+            id_pengguna = random.randint(2, 50)
+            title = random.choice([
+                f"Laporan #{random.randint(1, 20)} diterima",
+                "Peringatan Waspada Banjir",
+                "Status Laporan Diperbarui",
+            ])
+            body = random.choice(LAPORAN_TEKS)
+            is_read = random.choice([0, 0, 1])
+            waktu = sekarang - timedelta(days=random.randint(0, 14), hours=random.randint(0, 23))
+            f.write(
+                f"INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) "
+                f"VALUES ({i}, {id_pengguna}, '{title}', '{body}', {is_read}, '{waktu.strftime('%Y-%m-%d %H:%M:%S')}');\n"
+            )
+        f.write("\n")
+
     print(f"File '{OUTPUT_FILE}' berhasil di-generate")
 
 if __name__ == "__main__": 

@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname(__DIR__) . '/app/Controllers/RiverValidator.php';
+require_once dirname(__DIR__) . '/app/Validators/RiverValidator.php';
 
-use App\Controllers\RiverValidator;
+use App\Validators\RiverValidator;
 
 $passed = 0;
 $failed = 0;

@@ -1,0 +1,199 @@
+{
+  "info": {
+    "name": "Smart Flood Warning API",
+    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "oauthUrl", "value": "http://localhost:3002" },
+    { "key": "accessToken", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "OAuth Token (password grant)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{baseUrl}}/oauth/token",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "password" },
+                { "key": "username", "value": "hadiputra2" },
+                { "key": "password", "value": "kelompok2dev" },
+                { "key": "client_id", "value": "citizen-app" },
+                { "key": "client_secret", "value": "citizen-secret-dev" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Gateway Health",
+          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+        }
+      ]
+    },
+    {
+      "name": "Citizen (php-user)",
+      "item": [
+        {
+          "name": "GET /api/citizens (alias)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/citizens"
+          }
+        },
+        {
+          "name": "GET /api/reports",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/reports"
+          }
+        },
+        {
+          "name": "POST /api/reports",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/reports",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"deskripsiLaporan\":\"Sensor banjir di gang 3 tidak akurat sejak kemarin malam.\"}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/reports/:id/status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/api/reports/1/status",
+            "body": { "mode": "raw", "raw": "{\"status\":\"in_progress\"}" }
+          }
+        },
+        {
+          "name": "GET /api/notifications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/notifications"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Traffic & Environment (php-river)",
+      "item": [
+        {
+          "name": "GET /api/traffic/current",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/traffic/current"
+          }
+        },
+        {
+          "name": "GET /api/environment/current",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/environment/current"
+          }
+        },
+        {
+          "name": "GET /api/environment/alerts",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/environment/alerts"
+          }
+        }
+      ]
+    },
+    {
+      "name": "ML (python-ml-service)",
+      "item": [
+        {
+          "name": "POST /predict/traffic",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/predict/traffic",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idSungai\":1,\"curahHujan\":12,\"tinggiAir\":2.5,\"kelembapanTanah\":60,\"suhuMin\":25,\"suhuMax\":32,\"suhuRataRata\":28,\"kelembapanUdara\":77,\"sunShine\":5,\"kecepatanAngin\":10,\"arahAngin\":180,\"kecepatanRataRataAngin\":8}"
+            }
+          }
+        },
+        {
+          "name": "POST /predict/air-quality",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/predict/air-quality",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idNode\":1,\"tinggiAir\":1.2,\"kelembapanTanah\":55,\"suhuMin\":24,\"suhuMax\":31,\"suhuRataRata\":27,\"kelembapanUdara\":70,\"sunShine\":6,\"kecepatanAngin\":9,\"arahAngin\":90,\"kecepatanRataRataAngin\":7}"
+            }
+          }
+        },
+        {
+          "name": "POST /detect/anomaly",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/detect/anomaly",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"sensor_value\":12.5,\"timestamp_hour\":14,\"rolling_mean_1h\":4.0,\"z_score\":2.8}"
+            }
+          }
+        },
+        {
+          "name": "GET /model/feature-importance",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/model/feature-importance"
+          }
+        },
+        {
+          "name": "POST /predict/batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/predict/batch",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"items\":[{\"type\":\"traffic\",\"payload\":{\"idSungai\":1,\"curahHujan\":12,\"tinggiAir\":2.5,\"kelembapanTanah\":60,\"suhuMin\":25,\"suhuMax\":32,\"suhuRataRata\":28,\"kelembapanUdara\":77,\"sunShine\":5,\"kecepatanAngin\":10,\"arahAngin\":180,\"kecepatanRataRataAngin\":8}}]}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -6,9 +6,11 @@ date_default_timezone_set('Asia/Jakarta');
 
 use App\Controllers\FloodHistoryController;
 use App\Controllers\LaporanController;
+use App\Controllers\NotifController;
 use App\Controllers\UserController;
 use App\Models\FloodHistoryModel;
 use App\Models\LaporanModel;
+use App\Models\NotificationModel;
 use App\Models\UserModel;
 
 $requestHeaders = function_exists('getallheaders') ? array_change_key_case(getallheaders(), CASE_LOWER) : [];
@@ -22,6 +24,20 @@ if ($path === '//') {
     $path = '/';
 }
 
+$normalizeApiPath = static function (string $rawPath): string {
+    if (preg_match('#^/api/citizens(?:/|$)#', $rawPath)) {
+        return preg_replace('#^/api/citizens#', '/api/users', $rawPath);
+    }
+
+    if (preg_match('#^/api/reports(?:/|$)#', $rawPath)) {
+        return preg_replace('#^/api/reports#', '/api/laporan', $rawPath);
+    }
+
+    return $rawPath;
+};
+
+$path = $normalizeApiPath($path);
+
 if ($path === '/' || $path === '/index.php') {
     require __DIR__ . '/login.php';
     exit;
@@ -30,6 +46,7 @@ if ($path === '/' || $path === '/index.php') {
 $floodHistoryController = new FloodHistoryController(new FloodHistoryModel());
 $userController = new UserController(new UserModel());
 $laporanController = new LaporanController(new LaporanModel());
+$notifController = new NotifController(new NotificationModel());
 
 $sendRouterResponse = function ($code, $status, $message) {
     http_response_code($code);
@@ -62,6 +79,14 @@ if (preg_match('#^/api/flood-history/([^/]+)$#', $path, $matches)) {
 
     if ($method === 'DELETE') {
         $floodHistoryController->delete($id, $userRole);
+    }
+
+    $sendRouterResponse(405, 'error', 'Method HTTP Tidak Diizinkan.');
+}
+
+if ($path === '/api/notifications') {
+    if ($method === 'GET') {
+        $notifController->index($userId);
     }
 
     $sendRouterResponse(405, 'error', 'Method HTTP Tidak Diizinkan.');
@@ -104,6 +129,16 @@ if ($path === '/api/laporan') {
 
     if ($method === 'POST') {
         $laporanController->store($userRole, $userId);
+    }
+
+    $sendRouterResponse(405, 'error', 'Method HTTP Tidak Diizinkan.');
+}
+
+if (preg_match('#^/api/laporan/([^/]+)/status$#', $path, $matches)) {
+    $id = $matches[1];
+
+    if ($method === 'PATCH') {
+        $laporanController->updateStatus($id, $userRole);
     }
 
     $sendRouterResponse(405, 'error', 'Method HTTP Tidak Diizinkan.');

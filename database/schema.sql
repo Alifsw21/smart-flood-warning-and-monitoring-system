@@ -81,9 +81,23 @@ CREATE TABLE user_laporan(
     id INT AUTO_INCREMENT PRIMARY KEY,
     idPengguna INT,
     deskripsiLaporan TEXT NOT NULL,
+    status ENUM('pending', 'in_progress', 'resolved', 'rejected') DEFAULT 'pending',
     waktuDibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idPengguna) REFERENCES user_user(id),
-    INDEX idx_user_laporan_pengguna (idPengguna)
+    INDEX idx_user_laporan_pengguna (idPengguna),
+    INDEX idx_user_laporan_status (status)
+);
+
+CREATE TABLE user_notifications(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    idPengguna INT NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    body TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (idPengguna) REFERENCES user_user(id),
+    INDEX idx_user_notif_pengguna (idPengguna),
+    INDEX idx_user_notif_read (is_read)
 );
 
 CREATE TABLE user_riwayatBanjir(
@@ -123,6 +137,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.river_sensorReading TO 'river'
 CREATE USER IF NOT EXISTS 'user'@'%' IDENTIFIED BY 'UserSecret';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_user TO 'user'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_laporan TO 'user'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_notifications TO 'user'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_riwayatBanjir TO 'user'@'%';
 GRANT SELECT ON kelompok2.river_sungai TO 'user'@'%';
 

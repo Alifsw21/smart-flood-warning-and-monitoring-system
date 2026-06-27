@@ -10,7 +10,7 @@ class LaporanModel extends BaseModel
 
     public function getAll(array $filters)
     {
-        $query = "SELECT l.id, l.idPengguna, u.username, l.deskripsiLaporan, l.waktuDibuat
+        $query = "SELECT l.id, l.idPengguna, u.username, l.deskripsiLaporan, l.status, l.waktuDibuat
                   FROM {$this->table} l
                   LEFT JOIN user_user u ON l.idPengguna = u.id";
         $where = [];
@@ -19,6 +19,11 @@ class LaporanModel extends BaseModel
         if (isset($filters['idPengguna']) && $filters['idPengguna'] !== '') {
             $where[] = 'l.idPengguna = :idPengguna';
             $params[':idPengguna'] = [(int) $filters['idPengguna'], PDO::PARAM_INT];
+        }
+
+        if (isset($filters['status']) && $filters['status'] !== '') {
+            $where[] = 'l.status = :status';
+            $params[':status'] = [$filters['status'], PDO::PARAM_STR];
         }
 
         if (!empty($where)) {
@@ -40,7 +45,7 @@ class LaporanModel extends BaseModel
 
     public function getById($id)
     {
-        $query = "SELECT l.id, l.idPengguna, u.username, l.deskripsiLaporan, l.waktuDibuat
+        $query = "SELECT l.id, l.idPengguna, u.username, l.deskripsiLaporan, l.status, l.waktuDibuat
                   FROM {$this->table} l
                   LEFT JOIN user_user u ON l.idPengguna = u.id
                   WHERE l.id = :id
@@ -73,6 +78,18 @@ class LaporanModel extends BaseModel
         );
         $stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
         $stmt->bindValue(':deskripsiLaporan', $data['deskripsiLaporan'], PDO::PARAM_STR);
+        $stmt->execute();
+
+        return (int) $stmt->rowCount();
+    }
+
+    public function updateStatus($id, string $status)
+    {
+        $stmt = $this->getConnection()->prepare(
+            "UPDATE {$this->table} SET status = :status WHERE id = :id"
+        );
+        $stmt->bindValue(':id', (int) $id, PDO::PARAM_INT);
+        $stmt->bindValue(':status', $status, PDO::PARAM_STR);
         $stmt->execute();
 
         return (int) $stmt->rowCount();

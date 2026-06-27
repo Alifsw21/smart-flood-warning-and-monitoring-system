@@ -164,4 +164,38 @@ class LaporanController extends BaseController
             $this->sendResponse(500, 'error', 'Terjadi Kesalahan Pada Database.');
         }
     }
+
+    public function updateStatus($id, $userRole)
+    {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, 'error', 'Akses Ditolak. Hanya Admin Yang Dapat Memperbarui Status Laporan.');
+        }
+
+        $error = $this->validator->validateId($id);
+
+        if ($error !== null) {
+            $this->sendResponse(400, 'error', $error);
+        }
+
+        $input = $this->getJsonInput();
+        $errors = $this->validator->validateStatusUpdate($input);
+
+        if (!empty($errors)) {
+            $this->sendResponse(400, 'error', 'Data Tidak Valid.', $errors);
+        }
+
+        try {
+            $existing = $this->model->getById($id);
+
+            if ($existing === null) {
+                $this->sendResponse(404, 'error', "Laporan Dengan ID $id Tidak Ditemukan.");
+            }
+
+            $this->model->updateStatus($id, $input['status']);
+            $data = $this->model->getById($id);
+            $this->sendResponse(200, 'success', 'Status Laporan Berhasil Diperbarui.', $data);
+        } catch (\PDOException $e) {
+            $this->sendResponse(500, 'error', 'Terjadi Kesalahan Pada Database.');
+        }
+    }
 }
