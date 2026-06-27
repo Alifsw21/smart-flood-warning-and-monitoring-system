@@ -329,3 +329,25 @@ INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilita
 INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (13, 2, 'normal', 0.11, '2026-06-26 12:00:00');
 INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (14, 3, 'normal', 0.22, '2026-06-26 15:20:00');
 INSERT INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES (15, 4, 'bencana', 0.93, '2026-06-26 20:10:00');
+
+-- 8. Riwayat Banjir (user_riwayatBanjir — Spec §8)
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (1, 1, 2.1, 'ringan', '2026-06-10 14:00:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (2, 2, 3.4, 'sedang', '2026-06-12 18:30:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (3, 3, 5.8, 'tinggi', '2026-06-15 22:15:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (4, 4, 1.7, 'ringan', '2026-06-18 09:45:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (5, 5, 4.2, 'sedang', '2026-06-20 16:20:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (6, 1, 6.1, 'tinggi', '2026-06-22 03:10:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (7, 2, 2.8, 'ringan', '2026-06-23 11:00:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (8, 3, 4.9, 'sedang', '2026-06-24 19:40:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (9, 4, 5.5, 'tinggi', '2026-06-25 21:05:00');
+INSERT INTO user_riwayatBanjir (id, idSungai, tinggiAir, status, waktuTerjadi) VALUES (10, 5, 3.0, 'ringan', '2026-06-26 08:30:00');
+
+-- 9. Notifikasi Warga (user_notifications — Spec §7.2 / §8)
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (1, 2, 'Laporan #4 diterima', 'Prediksi peringatan dini banjir semalam sangat akurat, warga sempat mengevakuasi barang.', 0, '2026-06-06 23:35:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (2, 8, 'Laporan #1 diterima', 'Data ketinggian air di aplikasi terlambat update dibandingkan kondisi sungai aslinya.', 1, '2026-06-07 23:35:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (3, 3, 'Laporan #5 diterima', 'Notifikasi status Waspada muncul di aplikasi, tapi sungai masih surut. Mohon kalibrasi sensor.', 0, '2026-06-06 04:35:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (4, 15, 'Peringatan Waspada Sungai Ciliwung', 'Sistem mendeteksi kenaikan tinggi air di zona Jakarta Timur.', 0, '2026-06-22 06:50:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (5, 23, 'Peringatan Bencana', 'Status BENCANA terdeteksi di Sungai Pesanggrahan. Segera evakuasi jika diperlukan.', 0, '2026-06-23 03:15:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (6, 42, 'Laporan #9 diterima', 'Prediksi peringatan dini banjir semalam sangat akurat, warga sempat mengevakuasi barang.', 1, '2026-06-25 18:35:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (7, 33, 'Laporan #10 diterima', 'Dashboard sangat membantu, tapi sensor suhu sepertinya terlalu tinggi (tidak realistis).', 0, '2026-06-15 01:35:00');
+INSERT INTO user_notifications (id, idPengguna, title, body, is_read, created_at) VALUES (8, 50, 'Status Laporan Diperbarui', 'Laporan Anda telah ditinjau dan status diubah menjadi in_progress.', 0, '2026-06-26 10:00:00');

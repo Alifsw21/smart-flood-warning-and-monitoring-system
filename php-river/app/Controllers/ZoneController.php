@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Validators\RiverValidator;
+
 use App\Models\Zone;
 
 class ZoneController extends BaseController {

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any, Literal
 
 import joblib
 import numpy as np
@@ -10,6 +11,10 @@ _model_water_level = None
 _model_weather = None
 _model_rainfall = None
 _load_error = None
+
+WATER_LEVEL_FEATURES = ['curahHujan', 'tinggiAir', 'kelembapanTanah']
+WEATHER_FEATURES = ['suhuMin', 'suhuMax', 'suhuRataRata', 'kelembapanUdara', 'sunShine', 'kecepatanAngin', 'arahAngin', 'kecepatanRataRataAngin']
+RAINFALL_FEATURES = WEATHER_FEATURES
 
 
 class BanjirInput(BaseModel):
@@ -39,6 +44,22 @@ class CurahHujanInput(BaseModel):
     kecepatanAngin: float = Field(0.0, ge=0)
     arahAngin: float = Field(0.0, ge=0, le=360)
     kecepatanRataRataAngin: float = Field(0.0, ge=0)
+
+
+class SensorAnomalyInput(BaseModel):
+    sensor_value: float
+    timestamp_hour: int = Field(..., ge=0, le=23)
+    rolling_mean_1h: float
+    z_score: float
+
+
+class BatchPredictItem(BaseModel):
+    type: Literal['traffic', 'air-quality', 'anomaly']
+    payload: dict[str, Any]
+
+
+class BatchPredictRequest(BaseModel):
+    items: list[BatchPredictItem] = Field(..., min_length=1)
 
 
 def load_models():
@@ -146,5 +167,86 @@ def predict_curah_hujan(data: CurahHujanInput) -> dict:
             "kategori_cuaca": kategori,
         },
         "message": "Prediksi curah hujan berhasil",
+        "service": "python-ml-service",
+    }
+
+
+def detect_anomaly(data: SensorAnomalyInput) -> dict:
+    if not models_ready():
+        raise RuntimeError(model_load_error() or "ML models are not loaded")
+
+    deviation = abs(data.sensor_value - data.rolling_mean_1h)
+    threshold = max(1.0, abs(data.rolling_mean_1h) * 0.35)
+    is_anom = abs(data.z_score) >= 2.0 or deviation >= threshold
+    anomaly_score = round(max(abs(data.z_score), deviation / max(threshold, 0.01)), 4)
+
+    if anomaly_score >= 3:
+        severity = "Kritis"
+    elif is_anom:
+        severity = "Peringatan"
+    else:
+        severity = "Normal"
+
+    return {
+        "status": "success",
+        "code": 200,
+        "data": {
+            "is_anomaly": is_anom,
+            "anomaly_score": anomaly_score,
+            "severity": severity,
+            "timestamp_hour": data.timestamp_hour,
+        },
+        "message": "Deteksi anomali berhasil",
+        "service": "python-ml-service",
+    }
+
+
+def _tree_feature_importance(model, feature_names: list[str]) -> dict[str, float]:
+    if not hasattr(model, "feature_importances_"):
+        return {name: 0.0 for name in feature_names}
+
+    values = model.feature_importances_.tolist()
+    return {
+        name: round(float(value), 4)
+        for name, value in zip(feature_names, values)
+    }
+
+
+def feature_importance() -> dict:
+    if not models_ready():
+        raise RuntimeError(model_load_error() or "ML models are not loaded")
+
+    return {
+        "status": "success",
+        "code": 200,
+        "data": {
+            "traffic": _tree_feature_importance(_model_water_level, WATER_LEVEL_FEATURES),
+            "air_quality": _tree_feature_importance(_model_weather, WEATHER_FEATURES),
+            "rainfall": _tree_feature_importance(_model_rainfall, RAINFALL_FEATURES),
+        },
+        "message": "Feature importance berhasil diambil",
+        "service": "python-ml-service",
+    }
+
+
+def predict_batch(request: BatchPredictRequest) -> dict:
+    results = []
+
+    for item in request.items:
+        if item.type == "traffic":
+            payload = BanjirInput(**item.payload)
+            results.append({"type": item.type, "result": predict_banjir(payload)["data"]})
+        elif item.type == "air-quality":
+            payload = CurahHujanInput(**item.payload)
+            results.append({"type": item.type, "result": predict_curah_hujan(payload)["data"]})
+        else:
+            payload = SensorAnomalyInput(**item.payload)
+            results.append({"type": item.type, "result": detect_anomaly(payload)["data"]})
+
+    return {
+        "status": "success",
+        "code": 200,
+        "data": {"predictions": results, "count": len(results)},
+        "message": "Batch prediction berhasil",
         "service": "python-ml-service",
     }

@@ -1,0 +1,30 @@
+services:
+  mysql:
+    ports:
+      - "3307:3306"
+
+  oauth-server:
+    environment:
+      NODE_ENV: development
+
+  express-gateway:
+    environment:
+      NODE_ENV: development
+
+  php-user:
+    volumes:
+      - ./php-user:/var/www/html
+
+  php-river:
+    environment:
+      APP_DEBUG: "true"
+    volumes:
+      - ./php-river:/var/www/html
+
+  php-analytics:
+    volumes:
+      - ./php-analytics:/var/www/html
+
+  python-ml-service:
+    volumes:
+      - ./python-ml-service:/app

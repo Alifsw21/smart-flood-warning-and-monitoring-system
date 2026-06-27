@@ -111,6 +111,22 @@ const bootstrap = async () => {
   app.use('/iot/traffic', proxyToPath(upstreams.river, '/api/traffic/readings'));
   app.use('/iot/air', proxyToPath(upstreams.river, '/api/environment/readings'));
 
+  app.use('/api/citizens', createProxyMiddleware({
+    target: upstreams.user,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/users${path}`,
+    on: { proxyReq: attachUserHeaders, error: proxyErrorHandler },
+  }));
+
+  app.use('/api/reports', createProxyMiddleware({
+    target: upstreams.user,
+    changeOrigin: true,
+    pathRewrite: (path) => `/api/laporan${path}`,
+    on: { proxyReq: attachUserHeaders, error: proxyErrorHandler },
+  }));
+
+  app.use('/api/notifications', proxyWithPrefix(upstreams.user, '/api/notifications'));
+
   app.use('/api/river', proxyWithPrefix(upstreams.river, '/api/river'));
   app.use('/api/environment/alerts', proxyWithPrefix(upstreams.analytics, '/api/environment/alerts'));
   app.use('/api/environment', proxyWithPrefix(upstreams.river, '/api/environment'));
@@ -118,6 +134,7 @@ const bootstrap = async () => {
   app.use('/api/analytics', proxyWithPrefix(upstreams.analytics, '/api/analytics'));
 
   app.use('/predict', proxyWithPrefix(upstreams.ml, '/predict'));
+  app.use('/model', proxyWithPrefix(upstreams.ml, '/model'));
   app.use('/api/sensor', proxyToPath(upstreams.ml, '/api/sensor'));
   app.use('/detect', proxyWithPrefix(upstreams.ml, '/detect'));
 

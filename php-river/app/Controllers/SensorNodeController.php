@@ -2,6 +2,8 @@
 
 namespace App\Controllers;
 
+use App\Validators\RiverValidator;
+
 use App\Models\SensorNode;
 
 class SensorNodeController extends BaseController {

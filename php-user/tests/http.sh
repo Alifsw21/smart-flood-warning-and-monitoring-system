@@ -106,6 +106,14 @@ assert_not_status POST /api/laporan 401 "POST /api/laporan with user id passes a
   -d '{"deskripsiLaporan":"Sensor banjir di gang 3 tidak akurat sejak kemarin malam."}'
 assert_status GET /api/laporan/abc 400 "GET invalid laporan id returns 400"
 
+assert_status GET /api/notifications 401 "GET /api/notifications without user id returns 401"
+assert_not_status GET /api/notifications 401 "GET /api/notifications with user id passes auth gate" -H "X-User-Id: 2" -H "X-User-Role: user"
+assert_status PATCH /api/laporan/1/status 403 "PATCH laporan status without admin returns 403"
+assert_not_status PATCH /api/laporan/1/status 403 "PATCH laporan status with admin passes gate" \
+  -H "X-User-Role: admin" -H "Content-Type: application/json" -d '{"status":"in_progress"}'
+assert_status PATCH /api/reports/1/status 403 "PATCH /api/reports alias without admin returns 403"
+assert_status GET /api/citizens 403 "GET /api/citizens alias without admin returns 403"
+
 assert_status GET /health 503 "GET /health returns 503 without DB"
 
 health_body="$(curl -s "http://127.0.0.1:8100/health")"

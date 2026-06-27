@@ -4,6 +4,7 @@ require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 use App\Validators\FloodHistoryValidator;
 use App\Validators\LaporanValidator;
+use App\Validators\NotificationValidator;
 use App\Validators\UserValidator;
 
 $passed = 0;
@@ -50,6 +51,12 @@ assert_test(empty($laporanValidator->validateCreate([
 assert_test(isset($laporanValidator->validateCreate([
     'deskripsiLaporan' => 'pendek',
 ])['deskripsiLaporan']), 'laporan validateCreate rejects short description');
+assert_test(empty($laporanValidator->validateStatusUpdate(['status' => 'resolved'])), 'laporan validateStatusUpdate accepts resolved');
+assert_test(isset($laporanValidator->validateStatusUpdate(['status' => 'invalid'])['status']), 'laporan validateStatusUpdate rejects invalid status');
+
+$notifValidator = new NotificationValidator();
+assert_test(empty($notifValidator->validateFilters(['is_read' => '0'])), 'notification validateFilters accepts is_read=0');
+assert_test(isset($notifValidator->validateFilters(['is_read' => '9'])['is_read']), 'notification validateFilters rejects invalid is_read');
 
 $total = $passed + $failed;
 echo "$passed/$total unit tests passed\n";

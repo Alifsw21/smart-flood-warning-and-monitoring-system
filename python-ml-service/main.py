@@ -12,11 +12,16 @@ import os
 
 from predictions import (
     BanjirInput,
+    BatchPredictRequest,
     CurahHujanInput,
+    SensorAnomalyInput,
+    detect_anomaly,
+    feature_importance,
     load_models,
     loaded_model_names,
     model_load_error,
     predict_banjir,
+    predict_batch,
     predict_curah_hujan,
 )
 from rabbitmq_topology import (
@@ -165,3 +170,43 @@ async def post_predict_curah_hujan(payload: CurahHujanInput):
         return result
     except RuntimeError as exc:
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/predict/traffic")
+async def post_predict_traffic_alias(payload: BanjirInput):
+    return await post_predict_banjir(payload)
+
+
+@app.post("/predict/air-quality")
+async def post_predict_air_quality_alias(payload: CurahHujanInput):
+    return await post_predict_curah_hujan(payload)
+
+
+@app.post("/detect/anomaly")
+async def post_detect_anomaly(payload: SensorAnomalyInput):
+    try:
+        result = detect_anomaly(payload)
+        result["timestamp"] = _timestamp()
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.get("/model/feature-importance")
+async def get_feature_importance():
+    try:
+        result = feature_importance()
+        result["timestamp"] = _timestamp()
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/predict/batch")
+async def post_predict_batch(request: BatchPredictRequest):
+    try:
+        result = predict_batch(request)
+        result["timestamp"] = _timestamp()
+        return result
+    except (RuntimeError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
