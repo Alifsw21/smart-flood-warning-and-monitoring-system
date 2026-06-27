@@ -14,4 +14,3 @@ resources:
   - python-ml-deployment.yaml
   - gateway-deployment.yaml
   - hpa.yaml
-  - ingress.yaml
