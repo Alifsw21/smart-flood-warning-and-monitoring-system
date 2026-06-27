@@ -93,7 +93,34 @@ Editor: http://localhost:1880 — flow **IoT S1 Pipeline**.
 
 ## Troubleshooting: "MQTT tidak dapat data IoT"
 
-### Penyebab paling sering: broker salah
+### Pakai Wokwi + `broker.hivemq.com` (kasus teammate)
+
+Wokwi dan firmware dev publish ke **HiveMQ internet**. Node-RED default compose subscribe ke **`mosquitto` lokal** — itu **broker berbeda**, jadi data tidak ketemu.
+
+**Fix:** arahkan Node-RED ke HiveMQ yang sama dengan Wokwi. Di file `.env`:
+
+```bash
+IOT_MQTT_BROKER=broker.hivemq.com
+IOT_MQTT_PORT=1883
+```
+
+Lalu restart Node-RED:
+
+```bash
+docker compose up -d node-red
+# atau: docker compose restart node-red
+```
+
+Cek di log Node-RED harus ada koneksi ke `broker.hivemq.com`, bukan `mosquitto`:
+
+```bash
+docker logs smartcity-node-red 2>&1 | grep -i mqtt
+```
+
+Jalankan Wokwi (Sensor Air + Sensor Cuaca), tunggu publish `kelompok2/sensors/sungai` dan `cuaca` — Node-RED harus merge dan POST ke Gateway.
+
+**Untuk demo S1 di server kursus / tanpa internet:** pakai default `IOT_MQTT_BROKER=mosquitto` + `python3 iot/simulator.py`.
+
 
 | Sumber data | Broker yang dipakai | Kelihatan di compose? |
 |-------------|---------------------|------------------------|
