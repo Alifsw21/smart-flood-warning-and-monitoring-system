@@ -1,0 +1,315 @@
+# Spec §6.1 — three PHP MVC services (Citizen/Traffic/Environment → php-user/php-river/php-analytics)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-user-svc
+  namespace: smartcity
+  labels:
+    app: php-user
+    tier: service
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: php-user
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-user
+  namespace: smartcity
+  labels:
+    app: php-user
+    tier: service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-user
+  template:
+    metadata:
+      labels:
+        app: php-user
+        tier: service
+    spec:
+      containers:
+        - name: php-user
+          image: smartcity/php-user:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: OAUTH_LOGIN_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: OAUTH_LOGIN_URL
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_DATABASE
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_USER_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: USER_DB_PASSWORD
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RABBITMQ_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-river-svc
+  namespace: smartcity
+  labels:
+    app: php-river
+    tier: service
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: php-river
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-river
+  namespace: smartcity
+  labels:
+    app: php-river
+    tier: service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-river
+  template:
+    metadata:
+      labels:
+        app: php-river
+        tier: service
+    spec:
+      containers:
+        - name: php-river
+          image: smartcity/php-river:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_PORT
+            - name: DB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_DATABASE
+            - name: DB_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_USER_RIVER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RIVER_DB_PASSWORD
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: APP_DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: APP_DEBUG
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: php-analytics-svc
+  namespace: smartcity
+  labels:
+    app: php-analytics
+    tier: service
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: php-analytics
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-analytics
+  namespace: smartcity
+  labels:
+    app: php-analytics
+    tier: service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-analytics
+  template:
+    metadata:
+      labels:
+        app: php-analytics
+        tier: service
+    spec:
+      containers:
+        - name: php-analytics
+          image: smartcity/php-analytics:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_DATABASE
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_USER_ANALYTICS
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: ANALYTICS_DB_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi

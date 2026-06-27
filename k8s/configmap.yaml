@@ -1,0 +1,58 @@
+# Spec §6.1 — non-sensitive configuration (service URLs, ports, feature flags)
+# Mirrors docker-compose.yml environment; secrets live in secrets.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: smartcity-config
+  namespace: smartcity
+  labels:
+    app.kubernetes.io/part-of: smart-flood-warning
+data:
+  MYSQL_DATABASE: kelompok2
+
+  # OAuth / Gateway
+  OAUTH_CLIENT_ID: gateway
+  OAUTH_URL: http://oauth-server-svc:3002
+  OAUTH_LOGIN_URL: http://oauth-server-svc:3002/api/auth/login
+
+  # Upstream service URLs (ClusterIP DNS)
+  PHP_USER_URL: http://php-user-svc:80
+  PHP_RIVER_URL: http://php-river-svc:80
+  PHP_ANALYTICS_URL: http://php-analytics-svc:80
+  ML_URL: http://python-ml-svc:8000
+
+  # Database hosts
+  DB_HOST: mysql-svc
+  DB_PORT: "3306"
+  MYSQL_HOST: mysql-svc
+
+  # RabbitMQ
+  RABBITMQ_HOST: rabbitmq-svc
+  RABBITMQ_PORT: "5672"
+  RABBITMQ_USER: smartcity
+  RABBITMQ_VHOST: /
+
+  # Redis (gateway rate limiting)
+  REDIS_HOST: redis-svc
+  REDIS_PORT: "6379"
+  REDIS_URL: redis://redis-svc:6379
+
+  # IoT / ML (optional until Slice #3 merges)
+  MQTT_HOST: mosquitto-svc
+  MQTT_PORT: "1883"
+  MQTT_TOPIC_PREFIX: kelompok2/sensors
+
+  # Service ports
+  GATEWAY_PORT: "3000"
+  OAUTH_PORT: "3002"
+  ML_PORT: "8000"
+
+  # DB users (passwords in Secret)
+  DB_USER_AUTH: auth
+  DB_USER_RIVER: river
+  DB_USER_USER: user
+  DB_USER_ANALYTICS: analytics
+  RIVER_DB_USER: river
+  ANALYTICS_DB_USER: analytics
+
+  APP_DEBUG: "false"

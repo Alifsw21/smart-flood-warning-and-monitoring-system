@@ -1,0 +1,23 @@
+# Spec §6.1 — HPA scales Python ML when CPU > 70% (S5 load demo)
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: python-ml-hpa
+  namespace: smartcity
+  labels:
+    app: python-ml
+    tier: ml
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: python-ml
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

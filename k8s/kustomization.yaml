@@ -1,0 +1,16 @@
+# Kustomize entrypoint — Spec §6.2: kubectl apply -k k8s/
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: smartcity
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secrets.yaml
+  - mysql-statefulset.yaml
+  - redis-deployment.yaml
+  - rabbitmq-deployment.yaml
+  - oauth-deployment.yaml
+  - php-deployments.yaml
+  - python-ml-deployment.yaml
+  - gateway-deployment.yaml
+  - hpa.yaml

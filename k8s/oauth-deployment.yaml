@@ -1,0 +1,95 @@
+# OAuth 2.0 server (Spec §4.2 / Per. 5-6) — required upstream for API Gateway
+apiVersion: v1
+kind: Service
+metadata:
+  name: oauth-server-svc
+  namespace: smartcity
+  labels:
+    app: oauth-server
+    tier: auth
+spec:
+  ports:
+    - port: 3002
+      targetPort: 3002
+      name: http
+  selector:
+    app: oauth-server
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oauth-server
+  namespace: smartcity
+  labels:
+    app: oauth-server
+    tier: auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oauth-server
+  template:
+    metadata:
+      labels:
+        app: oauth-server
+        tier: auth
+    spec:
+      containers:
+        - name: oauth-server
+          image: smartcity/oauth-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3002
+              name: http
+          env:
+            - name: PORT
+              value: "3002"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: JWT_SECRET
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_PORT
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_USER_AUTH
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: AUTH_DB_PASSWORD
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_DATABASE
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3002
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 300m
+              memory: 256Mi

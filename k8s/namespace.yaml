@@ -1,0 +1,8 @@
+# Spec §6.1 — namespace smartcity (Per. 13 Kubernetes)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: smartcity
+  labels:
+    app.kubernetes.io/part-of: smart-flood-warning
+    app.kubernetes.io/managed-by: kubectl
