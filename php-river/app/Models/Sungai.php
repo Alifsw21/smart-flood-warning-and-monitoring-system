@@ -44,8 +44,30 @@ class Sungai extends BaseModel {
     }
 
     public function delete($id) {
-        $query = "DELETE FROM {$this->table} WHERE id = :id";
-        $stmt = $this->db->prepare($query);
-        return $stmt->execute([':id' => $id]);
+        try {
+            $this->db->beginTransaction();
+
+            $deleteReadings = $this->db->prepare(
+                'DELETE rr FROM river_sensorReading rr
+                 INNER JOIN river_sensorNode n ON rr.idNode = n.id
+                 WHERE n.idSungai = :id'
+            );
+            $deleteReadings->execute([':id' => $id]);
+
+            $deleteNodes = $this->db->prepare('DELETE FROM river_sensorNode WHERE idSungai = :id');
+            $deleteNodes->execute([':id' => $id]);
+
+            $query = "DELETE FROM {$this->table} WHERE id = :id";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute([':id' => $id]);
+
+            $this->db->commit();
+            return $stmt->rowCount() > 0;
+        } catch (\PDOException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
     }
 }

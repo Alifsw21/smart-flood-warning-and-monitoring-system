@@ -20,7 +20,12 @@ class SungaiController extends BaseController {
         }
     }
 
-    public function store() {
+    public function store($userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat menambahkan sungai.");
+            return;
+        }
+
         $input = $this->getJsonInput();
 
         try {
@@ -55,7 +60,12 @@ class SungaiController extends BaseController {
         }
     }
 
-    public function update($id) {
+    public function update($id, $userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat memperbarui sungai.");
+            return;
+        }
+
         try {
             $data = $this->sungaiModel->find($id);
             if (!$data) {
@@ -83,7 +93,12 @@ class SungaiController extends BaseController {
         }
     }
 
-    public function destroy($id) {
+    public function destroy($id, $userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat menghapus sungai.");
+            return;
+        }
+
         try {
             $data = $this->sungaiModel->find($id);
 

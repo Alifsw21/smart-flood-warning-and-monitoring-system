@@ -20,7 +20,12 @@ class ZoneController extends BaseController {
         }
     }
 
-    public function store() {
+    public function store($userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat menambahkan zona.");
+            return;
+        }
+
         $input = $this->getJsonInput();
 
         try {
@@ -55,7 +60,12 @@ class ZoneController extends BaseController {
         }
     }
 
-    public function update($id) {
+    public function update($id, $userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat memperbarui zona.");
+            return;
+        }
+
         try {
             $data = $this->zoneModel->find($id);
             if (!$data) {
@@ -82,7 +92,12 @@ class ZoneController extends BaseController {
         }
     }
 
-    public function destroy($id) {
+    public function destroy($id, $userRole) {
+        if ($userRole !== 'admin') {
+            $this->sendResponse(403, false, "Akses ditolak. Hanya admin yang dapat menghapus zona.");
+            return;
+        }
+
         try {
             $data = $this->zoneModel->find($id);
             if (!$data) {
