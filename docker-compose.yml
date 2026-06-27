@@ -58,21 +58,9 @@ services:
       - "1883:1883"
     volumes:
       - ./iot/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./iot/passwd.dev:/mosquitto/config/passwd:ro
     networks:
       - smartcity-net
-  
-  node-red:
-    image: nodered/node-red:latest
-    container_name: smartcity-IoT-nodered
-    restart: unless-stopped
-    ports:
-      - "1880:1880"
-    volumes:
-      - ./iot/node-red-data:/data
-    networks:
-      - smartcity-net
-    depends_on:
-      - mosquitto
 
   oauth-server:
     build: ./oauth-server
@@ -99,10 +87,23 @@ services:
     container_name: smartcity-php-user
     restart: unless-stopped
     depends_on:
+      mysql:
+        condition: service_healthy
       oauth-server:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       OAUTH_LOGIN_URL: http://oauth-server:3002/api/auth/login
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-kelompok2}
+      DB_USER: user
+      DB_PASSWORD: ${USER_DB_PASSWORD:-UserSecret}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
     ports:
       - "8000:80"
     networks:
@@ -151,6 +152,30 @@ services:
     networks:
       - smartcity-net
 
+  php-analytics-consumer:
+    build:
+      context: ./php-analytics
+      dockerfile: Dockerfile.consumer
+    container_name: smartcity-php-analytics-consumer
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-kelompok2}
+      DB_USER: analytics
+      DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
+    networks:
+      - smartcity-net
+
   python-ml-service:
     build: ./python-ml-service
     container_name: smartcity-python-ml
@@ -184,6 +209,54 @@ services:
     networks:
       - smartcity-net
 
+  python-ml-consumer-air:
+    build: ./python-ml-service
+    container_name: smartcity-ml-consumer-air
+    restart: unless-stopped
+    command: ["python", "consumers/sensorReadingConsumer.py"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      mysql:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-RabbitSecret}
+      RABBITMQ_VHOST: /
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-kelompok2}
+      RIVER_DB_USER: river
+      RIVER_DB_PASSWORD: ${RIVER_DB_PASSWORD:-RiverSecret}
+    networks:
+      - smartcity-net
+
+  python-ml-consumer-banjir:
+    build: ./python-ml-service
+    container_name: smartcity-ml-consumer-banjir
+    restart: unless-stopped
+    command: ["python", "consumers/banjirConsumer.py"]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-RabbitSecret}
+      RABBITMQ_VHOST: /
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    networks:
+      - smartcity-net
+
   express-gateway:
     build: ./express-gateway
     container_name: smartcity-gateway
@@ -213,6 +286,67 @@ services:
     networks:
       - smartcity-net
 
+  node-red:
+    image: nodered/node-red:3.1
+    container_name: smartcity-node-red
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./iot/node-red-data:/data
+    networks:
+      - smartcity-net
+    depends_on:
+      - mosquitto
+      - express-gateway
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: smartcity-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - smartcity-net
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: smartcity-prometheus
+    restart: unless-stopped
+    depends_on:
+      - express-gateway
+      - cadvisor
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - smartcity-net
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: smartcity-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/smartcity-platform.json:ro
+    networks:
+      - smartcity-net
+
 networks:
   smartcity-net:
     driver: bridge
@@ -220,3 +354,4 @@ networks:
 volumes:
   mysql-data:
   rabbitmq-data:
+  grafana-data:

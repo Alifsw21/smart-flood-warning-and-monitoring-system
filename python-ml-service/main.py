@@ -1,13 +1,47 @@
+from datetime import datetime, timezone
+
 from fastapi import FastAPI, HTTPException
 from contextlib import asynccontextmanager
+from dotenv import load_dotenv
 import paho.mqtt.client as mqtt
 import threading
 import redis
 import json
 import pika
+import os
+
+from predictions import (
+    BanjirInput,
+    CurahHujanInput,
+    load_models,
+    loaded_model_names,
+    model_load_error,
+    predict_banjir,
+    predict_curah_hujan,
+)
+from rabbitmq_topology import (
+    ROUTING_AIR_NEW,
+    ROUTING_TRAFFIC_NEW,
+    publish_event,
+    rabbitmq_credentials,
+    setup_events_topology,
+)
+
+load_dotenv()
+
+RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "127.0.0.1")
+RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", "5672"))
+RABBITMQ_USER = os.environ.get("RABBITMQ_USER", "guest")
+RABBITMQ_PASSWORD = os.environ.get("RABBITMQ_PASSWORD", "guest")
+RABBITMQ_VHOST = os.environ.get("RABBITMQ_VHOST", "/")
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", "6379"))
+MQTT_HOST = os.environ.get("MQTT_HOST", "broker.hivemq.com")
+MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
+MQTT_TOPIC_PREFIX = os.environ.get("MQTT_TOPIC_PREFIX", "kelompok2/sensors").rstrip("/")
 
 try:
-    redis_client = redis.Redis(host='localhost', port=6379, decode_responses=True)
+    redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
     redis_client.ping()
 except Exception:
     redis_client = None
@@ -15,21 +49,19 @@ except Exception:
 latest_data = {"Node1": None, "Node2": None}
 
 def start_background_worker():
-    rmq_credentials = pika.PlainCredentials('guest', 'guest')
     rmq_conn = pika.BlockingConnection(pika.ConnectionParameters(
-        host='127.0.0.1',
-        port=5672,
-        virtual_host='/',
-        credentials=rmq_credentials
+        host=RABBITMQ_HOST,
+        port=RABBITMQ_PORT,
+        virtual_host=RABBITMQ_VHOST,
+        credentials=rabbitmq_credentials(),
     ))
     rmq_channel = rmq_conn.channel()
-    rmq_channel.queue_declare(queue='sensor_queue')
-    rmq_channel.queue_declare(queue='banjir_queue')
+    setup_events_topology(rmq_channel)
 
     def on_connect(client, userdata, flags, rc):
         print(f"Terhubung ke HiveMQ dengan kode: {rc}")
-        client.subscribe("kelompok2/sensors/sungai")
-        client.subscribe("kelompok2/sensors/cuaca")
+        client.subscribe(f"{MQTT_TOPIC_PREFIX}/sungai")
+        client.subscribe(f"{MQTT_TOPIC_PREFIX}/cuaca")
 
     def on_message(client, userdata, msg):
         global latest_data
@@ -48,22 +80,23 @@ def start_background_worker():
                 banjir_payload = gabung.copy()
                 banjir_payload['idSungai'] = gabung["idNode"]
 
-                rmq_channel.basic_publish(exchange='', routing_key='banjir_queue', body=json.dumps(banjir_payload))
-                rmq_channel.basic_publish(exchange='', routing_key='sensor_queue', body=json.dumps(gabung))
+                publish_event(rmq_channel, ROUTING_TRAFFIC_NEW, banjir_payload)
+                publish_event(rmq_channel, ROUTING_AIR_NEW, gabung)
 
                 print("Data gabungan berhasil dikirim ke antrean RabbitMQ")
                 latest_data = {"Node1": None, "Node2": None}
             except Exception as e:
                 print(f"Gagal mengirim ke antrean: {str(e)}")
 
-    client = mqtt.Client()
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION1)
     client.on_connect = on_connect
     client.on_message = on_message
-    client.connect("broker.hivemq.com", 1883, 60)
+    client.connect(MQTT_HOST, MQTT_PORT, 60)
     client.loop_forever()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    load_models()
     threading.Thread(target=start_background_worker, daemon=True).start()
     yield
 
@@ -85,10 +118,13 @@ def fetch_redis_data(key: str, empty_msg: str):
 
 @app.get("/health")
 async def health_check():
+    models = loaded_model_names()
     return {
-        "status": "ok", 
-        "service": "ready", 
-        "redis_connected": redis_client is not None
+        "status": "ok" if models else "degraded",
+        "service": "python-ml-service",
+        "models": models,
+        "redis_connected": redis_client is not None,
+        "model_error": model_load_error(),
     }
 
 @app.get("/api/sensor")
@@ -105,3 +141,27 @@ async def get_realtime():
 @app.get("/predict/realtime/curah-hujan")
 async def get_realtime_hujan():
     return fetch_redis_data("estimasi_hujan_terakhir", "Belum ada data sensor curah hujan")
+
+
+def _timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+@app.post("/predict/banjir")
+async def post_predict_banjir(payload: BanjirInput):
+    try:
+        result = predict_banjir(payload)
+        result["timestamp"] = _timestamp()
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+
+@app.post("/predict/curah-hujan")
+async def post_predict_curah_hujan(payload: CurahHujanInput):
+    try:
+        result = predict_curah_hujan(payload)
+        result["timestamp"] = _timestamp()
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc)) from exc

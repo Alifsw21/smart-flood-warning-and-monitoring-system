@@ -3,23 +3,12 @@ CREATE DATABASE IF NOT EXISTS kelompok2;
 USE kelompok2;
 
 # 1. Auth Service
-
 CREATE TABLE auth_oauthClient(
     id INT AUTO_INCREMENT PRIMARY KEY,
     client_id VARCHAR(80) UNIQUE NOT NULL,
     client_secret VARCHAR(255) NOT NULL,
     grant_types VARCHAR(80),
     redirect_uris TEXT
-);
-
-CREATE TABLE auth_oauthToken(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    client_id VARCHAR(80) NOT NULL,
-    user_id INT,
-    access_token VARCHAR(255) UNIQUE NOT NULL,
-    refresh_token VARCHAR(255) UNIQUE,
-    expires_at TIMESTAMP NOT NULL,
-    INDEX idx_auth_token_access (access_token)
 );
 
 # 2. php-river
@@ -57,7 +46,7 @@ CREATE TABLE river_sensorReading(
     suhuRataRata FLOAT NOT NULL,
     kelembapanUdara FLOAT NOT NULL,
     kecepatanAngin FLOAT NOT NULL,
-    arahAngin VARCHAR(10),
+    arahAngin FLOAT NOT NULL,
     recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (idNode) REFERENCES river_sensorNode(id),
     INDEX idx_river_reading_node (idNode),
@@ -67,10 +56,25 @@ CREATE TABLE river_sensorReading(
 # 3. php-user
 CREATE TABLE user_user(
     id INT AUTO_INCREMENT PRIMARY KEY,
-    nama VARCHAR(100) NOT NULL,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    email VARCHAR(150) UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('admin', 'pengguna') DEFAULT 'pengguna',
-    INDEX idx_user_id (id)
+    role ENUM('admin', 'user') DEFAULT 'user',
+    waktuDibuat TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_user_id (id),
+    INDEX idx_user_name (username),
+    INDEX idx_user_email (email)
+);
+
+CREATE TABLE auth_oauthToken(
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_id VARCHAR(80) NOT NULL,
+    user_id INT,
+    access_token VARCHAR(255) UNIQUE NOT NULL,
+    refresh_token VARCHAR(255) UNIQUE,
+    expires_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user_user(id),
+    INDEX idx_auth_token_access (access_token)
 );
 
 CREATE TABLE user_laporan(
@@ -104,6 +108,11 @@ CREATE TABLE analytics_peringatan(
     INDEX idx_analytics_sungai (idSungai),
     INDEX idx_analytics_recorded (recorded_at)
 );
+
+CREATE USER IF NOT EXISTS 'auth'@'%' IDENTIFIED BY 'AuthSecret';
+GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.auth_oauthClient TO 'auth'@'%';
+GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.auth_oauthToken TO 'auth'@'%';
+GRANT SELECT, INSERT ON kelompok2.user_user TO 'auth'@'%';
 
 CREATE USER IF NOT EXISTS 'river'@'%' IDENTIFIED BY 'RiverSecret';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.river_zones TO 'river'@'%';

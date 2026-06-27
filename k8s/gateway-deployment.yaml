@@ -1,0 +1,125 @@
+# Spec §6.1 — API Gateway (Per. 7, 10) — 2 replicas for S5 rolling-update demo
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-svc
+  namespace: smartcity
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+      name: http
+  selector:
+    app: api-gateway
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: smartcity
+  labels:
+    app: api-gateway
+    tier: gateway
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: api-gateway
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+        tier: gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: smartcity/api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: PORT
+              value: "3000"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: JWT_SECRET
+            - name: OAUTH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: OAUTH_URL
+            - name: OAUTH_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: OAUTH_CLIENT_ID
+            - name: OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: OAUTH_CLIENT_SECRET
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: REDIS_HOST
+            - name: REDIS_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: REDIS_PORT
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: REDIS_URL
+            - name: PHP_USER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: PHP_USER_URL
+            - name: PHP_RIVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: PHP_RIVER_URL
+            - name: PHP_ANALYTICS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: PHP_ANALYTICS_URL
+            - name: ML_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: ML_URL
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

@@ -42,7 +42,7 @@ function validateTemperatureRange($t_avg) {
         'tx' => $t_avg + 3.0
     ];
 }
-$tempRange = getTemperatureRange(28.5);
+$tempRange = validateTemperatureRange(28.5);
 assertTest(($tempRange['tn'] == 26.5) && ($tempRange['tx'] == 31.5), "Kalkulasi suhu maksimal dan minimal");
 
 function calculateRainfall($raw_pot) {
