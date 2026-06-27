@@ -6,7 +6,7 @@ const char* ssid = "Wokwi-GUEST";
 
 const bool IS_DEPLOYED = false;
 
-const char* mqtt_server = IS_DEPLOYED ? "103.147.92.134" : "broker.emqx.io"; 
+const char* mqtt_server = IS_DEPLOYED ? "103.147.92.134" : "broker.hivemq.com"; 
 const int mqtt_port = 1883;
 const char* mqtt_user = "sensor1";
 const char* mqtt_pass = "sensor1Secret";
