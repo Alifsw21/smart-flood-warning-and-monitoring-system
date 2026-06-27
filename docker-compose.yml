@@ -285,6 +285,53 @@ services:
     networks:
       - smartcity-net
 
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.2
+    container_name: smartcity-cadvisor
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - smartcity-net
+
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: smartcity-prometheus
+    restart: unless-stopped
+    depends_on:
+      - express-gateway
+      - cadvisor
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - smartcity-net
+
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: smartcity-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/smartcity-platform.json:ro
+    networks:
+      - smartcity-net
+
 networks:
   smartcity-net:
     driver: bridge
@@ -292,3 +339,4 @@ networks:
 volumes:
   mysql-data:
   rabbitmq-data:
+  grafana-data:
