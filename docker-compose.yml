@@ -294,10 +294,14 @@ services:
       - "1880:1880"
     volumes:
       - ./iot/node-red-data:/data
+    environment:
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-GatewaySecretDev123}
     networks:
       - smartcity-net
     depends_on:
       - mosquitto
+      - oauth-server
       - express-gateway
 
   cadvisor:

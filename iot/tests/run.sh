@@ -16,6 +16,15 @@ else
   failed=1
 fi
 
+if [ "$failed" -eq 0 ] && [ "${RUN_S1_E2E:-}" = "1" ]; then
+  if bash iot/tests/s1-e2e.sh; then
+    echo "PASS S1 IoT E2E"
+  else
+    echo "FAIL S1 IoT E2E"
+    failed=1
+  fi
+fi
+
 if [ "$failed" -eq 0 ]; then
   echo "PASS iot test suite"
   exit 0
