@@ -17,7 +17,7 @@ $dbInstance = new Database();
 $db = $dbInstance->getConnection();
 
 $requestHeaders = function_exists('getallheaders') ? array_change_key_case(getallheaders(), CASE_LOWER) : [];
-$userRole = $requestHeaders['x-user-role'] ?? 'pengguna';
+$userRole = $requestHeaders['x-user-role'] ?? 'user';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $path = '/' . trim($requestPath, '/');
@@ -44,7 +44,7 @@ $sendHealthResponse = function (int $code, bool $healthy, string $message): void
     echo json_encode([
         'status' => $healthy ? 'success' : 'error',
         'code' => $code,
-        'data' => ['database' => $healthy ? 'connected' : 'disconnected'],
+        'data' => ['db' => $healthy ? 'connected' : 'disconnected'],
         'message' => $message,
         'timestamp' => (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z'),
         'service' => 'php-river',

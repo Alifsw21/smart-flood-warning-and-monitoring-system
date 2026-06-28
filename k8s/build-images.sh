@@ -16,6 +16,7 @@ build() {
 build oauth-server smartcity/oauth-server:latest
 build express-gateway smartcity/api-gateway:latest
 build php-user smartcity/php-user:latest
+docker build -f php-user/Dockerfile.consumer -t smartcity/php-user-consumer:latest php-user
 build php-river smartcity/php-river:latest
 build php-analytics smartcity/php-analytics:latest
 docker build -f php-analytics/Dockerfile.consumer -t smartcity/php-analytics-consumer:latest php-analytics

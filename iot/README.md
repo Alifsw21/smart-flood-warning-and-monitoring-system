@@ -20,7 +20,7 @@ Spesifikasi: **Tugas Besar §4.6** · skenario uji **S1** (MQTT → Node-RED →
 | `kelompok2/sensors/sungai` | `idNode`, `tinggiAir`, `kelembapanTanah` |
 | `kelompok2/sensors/cuaca` | `idNode`, `curahHujan`, `suhuRataRata`, `kelembapanUdara`, `kecepatanAngin`, … |
 
-Node-RED menggabungkan keduanya lalu POST ke `http://express-gateway:3000/iot/traffic` dengan token OAuth `client_credentials`.
+Node-RED menggabungkan keduanya lalu POST ke `http://express-gateway:3530/iot/traffic` dengan token OAuth `client_credentials`.
 
 ## Menjalankan dengan Docker Compose
 
@@ -64,7 +64,7 @@ Untuk deploy: set `IS_DEPLOYED = true` di firmware dan isi `secrets.h` (MQTT hos
 | `OAUTH_CLIENT_SECRET` | `GatewaySecretDev123` | Node-RED + Gateway introspect |
 | `JWT_SECRET` | lihat `.env.example` | Gateway smoke / JWT lokal |
 
-Node-RED meminta token di startup (`POST oauth-server:3002/oauth/token`) dan menyimpan di `global.authToken`.
+Node-RED meminta token di startup (`POST oauth-server:3531/oauth/token`) dan menyimpan di `global.authToken`.
 
 ## Antrian saat Gateway down (§4.6C)
 
@@ -89,7 +89,7 @@ bash iot/tests/s1-e2e.sh            # hanya S1
 
 ## Node-RED UI
 
-Editor: http://localhost:1880 — flow **IoT S1 Pipeline**.
+Editor: http://localhost:1890 — flow **IoT S1 Pipeline**.
 
 ## Troubleshooting: "MQTT tidak dapat data IoT"
 

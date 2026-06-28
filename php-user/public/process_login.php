@@ -10,7 +10,7 @@ $data = [
     'password' => $password,
 ];
 
-$oauthLoginUrl = getenv('OAUTH_LOGIN_URL') ?: 'http://localhost:3002/api/auth/login';
+$oauthLoginUrl = getenv('OAUTH_LOGIN_URL') ?: 'http://localhost:3531/api/auth/login';
 
 $curl = curl_init();
 

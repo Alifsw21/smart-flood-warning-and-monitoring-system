@@ -1,13 +1,20 @@
 {
   "info": {
     "name": "Smart Flood Warning API",
-    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12)",
+    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12).\n\nUsage:\n1. Set collection variables if needed (defaults target local docker compose).\n2. Run **OAuth Token (password grant)** — accessToken and refreshToken are saved automatically.\n3. For IoT ingest, run **OAuth Token (client_credentials)** first (Node-RED uses the gateway client).\n4. Protected requests use {{accessToken}}.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000" },
-    { "key": "oauthUrl", "value": "http://localhost:3002" },
-    { "key": "accessToken", "value": "" }
+    { "key": "baseUrl", "value": "http://localhost:3530" },
+    { "key": "oauthUrl", "value": "http://localhost:3531" },
+    { "key": "accessToken", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "citizenClientId", "value": "citizen-app" },
+    { "key": "citizenClientSecret", "value": "CitizenSecretDev123" },
+    { "key": "gatewayClientId", "value": "gateway" },
+    { "key": "gatewayClientSecret", "value": "GatewaySecretDev123" },
+    { "key": "devUsername", "value": "hadiputra2" },
+    { "key": "devPassword", "value": "kelompok2dev" }
   ],
   "item": [
     {
@@ -15,6 +22,25 @@
       "item": [
         {
           "name": "OAuth Token (password grant)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.access_token) {",
+                  "        pm.collectionVariables.set('accessToken', json.access_token);",
+                  "    }",
+                  "    if (json.refresh_token) {",
+                  "        pm.collectionVariables.set('refreshToken', json.refresh_token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
@@ -23,17 +49,144 @@
               "mode": "urlencoded",
               "urlencoded": [
                 { "key": "grant_type", "value": "password" },
-                { "key": "username", "value": "hadiputra2" },
-                { "key": "password", "value": "kelompok2dev" },
-                { "key": "client_id", "value": "citizen-app" },
-                { "key": "client_secret", "value": "citizen-secret-dev" }
+                { "key": "username", "value": "{{devUsername}}" },
+                { "key": "password", "value": "{{devPassword}}" },
+                { "key": "client_id", "value": "{{citizenClientId}}" },
+                { "key": "client_secret", "value": "{{citizenClientSecret}}" }
               ]
+            }
+          }
+        },
+        {
+          "name": "OAuth Token (client_credentials)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.access_token) {",
+                  "        pm.collectionVariables.set('accessToken', json.access_token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/oauth/token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grant_type\": \"client_credentials\",\n  \"client_id\": \"{{gatewayClientId}}\",\n  \"client_secret\": \"{{gatewayClientSecret}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "OAuth Token (refresh_token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.access_token) {",
+                  "        pm.collectionVariables.set('accessToken', json.access_token);",
+                  "    }",
+                  "    if (json.refresh_token) {",
+                  "        pm.collectionVariables.set('refreshToken', json.refresh_token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/oauth/token",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"grant_type\": \"refresh_token\",\n  \"client_id\": \"{{citizenClientId}}\",\n  \"client_secret\": \"{{citizenClientSecret}}\",\n  \"refresh_token\": \"{{refreshToken}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /api/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    const token = json.access_token || json.token;",
+                  "    if (token) {",
+                  "        pm.collectionVariables.set('accessToken', token);",
+                  "    }",
+                  "    if (json.refresh_token) {",
+                  "        pm.collectionVariables.set('refreshToken', json.refresh_token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{devUsername}}\",\n  \"password\": \"{{devPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "GET /api/auth/profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/auth/profile"
+          }
+        },
+        {
+          "name": "POST /oauth/introspect",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/oauth/introspect",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{accessToken}}\",\n  \"client_id\": \"{{gatewayClientId}}\",\n  \"client_secret\": \"{{gatewayClientSecret}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /oauth/revoke",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/oauth/revoke",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{accessToken}}\",\n  \"client_id\": \"{{gatewayClientId}}\",\n  \"client_secret\": \"{{gatewayClientSecret}}\"\n}"
             }
           }
         },
         {
           "name": "Gateway Health",
           "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+        },
+        {
+          "name": "GET /metrics",
+          "request": { "method": "GET", "url": "{{baseUrl}}/metrics" }
         }
       ]
     },
@@ -90,6 +243,14 @@
             "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{baseUrl}}/api/notifications"
           }
+        },
+        {
+          "name": "GET /api/flood-history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/flood-history"
+          }
         }
       ]
     },
@@ -126,6 +287,36 @@
       "name": "ML (python-ml-service)",
       "item": [
         {
+          "name": "POST /predict/banjir",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/predict/banjir",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idSungai\":1,\"curahHujan\":12,\"tinggiAir\":2.5,\"kelembapanTanah\":60,\"suhuMin\":25,\"suhuMax\":32,\"suhuRataRata\":28,\"kelembapanUdara\":77,\"sunShine\":5,\"kecepatanAngin\":10,\"arahAngin\":180,\"kecepatanRataRataAngin\":8}"
+            }
+          }
+        },
+        {
+          "name": "POST /predict/curah-hujan",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/predict/curah-hujan",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idNode\":1,\"tinggiAir\":1.2,\"kelembapanTanah\":55,\"suhuMin\":24,\"suhuMax\":31,\"suhuRataRata\":27,\"kelembapanUdara\":70,\"sunShine\":6,\"kecepatanAngin\":9,\"arahAngin\":90,\"kecepatanRataRataAngin\":7}"
+            }
+          }
+        },
+        {
           "name": "POST /predict/traffic",
           "request": {
             "method": "POST",
@@ -153,6 +344,22 @@
               "mode": "raw",
               "raw": "{\"idNode\":1,\"tinggiAir\":1.2,\"kelembapanTanah\":55,\"suhuMin\":24,\"suhuMax\":31,\"suhuRataRata\":27,\"kelembapanUdara\":70,\"sunShine\":6,\"kecepatanAngin\":9,\"arahAngin\":90,\"kecepatanRataRataAngin\":7}"
             }
+          }
+        },
+        {
+          "name": "GET /predict/realtime/banjir",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/predict/realtime/banjir"
+          }
+        },
+        {
+          "name": "GET /predict/realtime/curah-hujan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/predict/realtime/curah-hujan"
           }
         },
         {
@@ -190,6 +397,50 @@
             "body": {
               "mode": "raw",
               "raw": "{\"items\":[{\"type\":\"traffic\",\"payload\":{\"idSungai\":1,\"curahHujan\":12,\"tinggiAir\":2.5,\"kelembapanTanah\":60,\"suhuMin\":25,\"suhuMax\":32,\"suhuRataRata\":28,\"kelembapanUdara\":77,\"sunShine\":5,\"kecepatanAngin\":10,\"arahAngin\":180,\"kecepatanRataRataAngin\":8}}]}"
+            }
+          }
+        },
+        {
+          "name": "GET /api/sensor",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/sensor"
+          }
+        }
+      ]
+    },
+    {
+      "name": "IoT (Node-RED ingress)",
+      "description": "Run **OAuth Token (client_credentials)** first — same flow as Node-RED S1.",
+      "item": [
+        {
+          "name": "POST /iot/traffic",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/iot/traffic",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idNode\":1,\"tinggiAir\":12,\"kelembapanTanah\":55,\"curahHujan\":6,\"suhuRataRata\":29,\"kelembapanUdara\":72,\"kecepatanAngin\":8}"
+            }
+          }
+        },
+        {
+          "name": "POST /iot/air",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/iot/air",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idNode\":1,\"tinggiAir\":12,\"kelembapanTanah\":55,\"curahHujan\":6,\"suhuRataRata\":29,\"kelembapanUdara\":72,\"kecepatanAngin\":8}"
             }
           }
         }

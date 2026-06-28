@@ -27,6 +27,7 @@ test-all:
 	./php-analytics/tests/run.sh
 	./python-ml-service/tests/http.sh
 	./express-gateway/tests/smoke.sh
+	./express-gateway/tests/s2-report-e2e.sh
 	./express-gateway/tests/s3-ml-e2e.sh
 	./monitoring/tests/smoke.sh
 

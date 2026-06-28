@@ -82,6 +82,9 @@ const persistToken = async ({ clientId, userId, includeRefresh }) => {
     const accessToken = createTokenValue();
     const refreshToken = includeRefresh ? createTokenValue() : null;
     const expiresAt = await OAuthToken.resolveExpiresAt(config.ACCESS_TOKEN_TTL_SECONDS);
+    const refreshExpiresAt = includeRefresh
+        ? await OAuthToken.resolveExpiresAt(config.REFRESH_TOKEN_TTL_SECONDS)
+        : null;
 
     await OAuthToken.create({
         clientId,
@@ -89,6 +92,7 @@ const persistToken = async ({ clientId, userId, includeRefresh }) => {
         accessToken,
         refreshToken,
         expiresAt,
+        refreshExpiresAt,
     });
 
     return {

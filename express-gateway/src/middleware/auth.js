@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 const { gatewayError } = require('./errors');
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const OAUTH_URL = process.env.OAUTH_URL || 'http://oauth-server:3002';
+const OAUTH_URL = process.env.OAUTH_URL || 'http://oauth-server:3531';
 const OAUTH_CLIENT_ID = process.env.OAUTH_CLIENT_ID || 'gateway';
 const OAUTH_CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET || '';
 

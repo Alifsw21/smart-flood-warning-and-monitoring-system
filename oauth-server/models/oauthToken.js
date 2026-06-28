@@ -9,11 +9,11 @@ async function resolveExpiresAt(ttlSeconds) {
     return rows[0].expires_at;
 }
 
-async function create({ clientId, userId, accessToken, refreshToken, expiresAt }) {
+async function create({ clientId, userId, accessToken, refreshToken, expiresAt, refreshExpiresAt = null }) {
     await db.execute(
-        `INSERT INTO auth_oauthToken (client_id, user_id, access_token, refresh_token, expires_at)
-         VALUES (?, ?, ?, ?, ?)`,
-        [clientId, userId ?? null, accessToken, refreshToken ?? null, expiresAt]
+        `INSERT INTO auth_oauthToken (client_id, user_id, access_token, refresh_token, expires_at, refresh_expires_at)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [clientId, userId ?? null, accessToken, refreshToken ?? null, expiresAt, refreshExpiresAt]
     );
 }
 
@@ -33,9 +33,10 @@ async function findByAccessToken(accessToken) {
 
 async function findByRefreshToken(refreshToken) {
     const [rows] = await db.execute(
-        `SELECT id, client_id, user_id, access_token, refresh_token, expires_at
+        `SELECT id, client_id, user_id, access_token, refresh_token, expires_at, refresh_expires_at
          FROM auth_oauthToken
-         WHERE refresh_token = ?`,
+         WHERE refresh_token = ?
+           AND (refresh_expires_at IS NULL OR refresh_expires_at > NOW())`,
         [refreshToken]
     );
 

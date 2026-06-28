@@ -109,13 +109,15 @@ def callback(ch, method, properties, body):
                 f"Berhasil memproses prediksi (data sudah disimpan php-river). "
                 f"Hasil Prediksi Hujan: {round(rainfall, 2)} mm ({kategori})"
             )
+        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         print(f"Gagal memproses pesan: {str(e)}")
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 
 channel.basic_consume(
     queue=ROUTING_AIR_NEW,
     on_message_callback=callback,
-    auto_ack=True,
+    auto_ack=False,
 )
 channel.start_consuming()

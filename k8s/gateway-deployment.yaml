@@ -10,7 +10,7 @@ metadata:
 spec:
   ports:
     - port: 80
-      targetPort: 3000
+      targetPort: 3530
       name: http
   selector:
     app: api-gateway
@@ -44,11 +44,11 @@ spec:
           image: smartcity/api-gateway:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 3000
+            - containerPort: 3530
               name: http
           env:
             - name: PORT
-              value: "3000"
+              value: "3530"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -107,13 +107,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 3530
             initialDelaySeconds: 10
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health
-              port: 3000
+              port: 3530
             initialDelaySeconds: 30
             periodSeconds: 10
           resources:

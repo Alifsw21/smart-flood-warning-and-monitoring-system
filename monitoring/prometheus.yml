@@ -11,7 +11,7 @@ scrape_configs:
   - job_name: express-gateway
     metrics_path: /metrics
     static_configs:
-      - targets: ["express-gateway:3000"]
+      - targets: ["express-gateway:3530"]
 
   - job_name: cadvisor
     static_configs:

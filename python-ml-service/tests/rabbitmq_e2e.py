@@ -22,7 +22,7 @@ from rabbitmq_topology import (
 )
 
 MYSQL_HOST = os.environ.get("MYSQL_HOST", "127.0.0.1")
-MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3307"))
+MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3350"))
 MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "kelompok2")
 ANALYTICS_DB_USER = os.environ.get("ANALYTICS_DB_USER", "analytics")
 ANALYTICS_DB_PASSWORD = os.environ.get("ANALYTICS_DB_PASSWORD", "AnalyticSecret")

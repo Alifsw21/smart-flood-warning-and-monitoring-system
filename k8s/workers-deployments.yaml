@@ -1,0 +1,278 @@
+# Spec §6 — RabbitMQ workers, IoT bridge, and citizen notification consumer (S1/S5/S6)
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-ml-consumer-air
+  namespace: smartcity
+  labels:
+    app: python-ml-consumer-air
+    tier: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-ml-consumer-air
+  template:
+    metadata:
+      labels:
+        app: python-ml-consumer-air
+        tier: worker
+    spec:
+      containers:
+        - name: consumer
+          image: smartcity/python-ml-service:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "consumers/sensorReadingConsumer.py"]
+          envFrom:
+            - configMapRef:
+                name: smartcity-config
+          env:
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RABBITMQ_PASSWORD
+            - name: RIVER_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RIVER_DB_PASSWORD
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: python-ml-consumer-banjir
+  namespace: smartcity
+  labels:
+    app: python-ml-consumer-banjir
+    tier: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: python-ml-consumer-banjir
+  template:
+    metadata:
+      labels:
+        app: python-ml-consumer-banjir
+        tier: worker
+    spec:
+      containers:
+        - name: consumer
+          image: smartcity/python-ml-service:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python", "consumers/banjirConsumer.py"]
+          envFrom:
+            - configMapRef:
+                name: smartcity-config
+          env:
+            - name: RABBITMQ_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RABBITMQ_PASSWORD
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-user-notification-consumer
+  namespace: smartcity
+  labels:
+    app: php-user-notification-consumer
+    tier: worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php-user-notification-consumer
+  template:
+    metadata:
+      labels:
+        app: php-user-notification-consumer
+        tier: worker
+    spec:
+      containers:
+        - name: consumer
+          image: smartcity/php-user-consumer:latest
+          imagePullPolicy: IfNotPresent
+          command: ["php", "bin/consume-notifications.php"]
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_HOST
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_PORT
+            - name: DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: MYSQL_DATABASE
+            - name: DB_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: DB_USER_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: USER_DB_PASSWORD
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_PORT
+            - name: RABBITMQ_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: smartcity-config
+                  key: RABBITMQ_USER
+            - name: RABBITMQ_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: smartcity-secrets
+                  key: RABBITMQ_PASSWORD
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto-svc
+  namespace: smartcity
+  labels:
+    app: mosquitto
+spec:
+  ports:
+    - port: 1883
+      targetPort: 1883
+      name: mqtt
+  selector:
+    app: mosquitto
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  namespace: smartcity
+  labels:
+    app: mosquitto
+    tier: iot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mosquitto
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+        tier: iot
+    spec:
+      containers:
+        - name: mosquitto
+          image: eclipse-mosquitto:2
+          ports:
+            - containerPort: 1883
+          volumeMounts:
+            - name: mosquitto-config
+              mountPath: /mosquitto/config
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+      volumes:
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-red-svc
+  namespace: smartcity
+  labels:
+    app: node-red
+spec:
+  ports:
+    - port: 1890
+      targetPort: 1890
+      name: http
+  selector:
+    app: node-red
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-red
+  namespace: smartcity
+  labels:
+    app: node-red
+    tier: iot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: node-red
+  template:
+    metadata:
+      labels:
+        app: node-red
+        tier: iot
+    spec:
+      containers:
+        - name: node-red
+          image: nodered/node-red:3.1
+          ports:
+            - containerPort: 1890
+          env:
+            - name: PORT
+              value: "1890"
+            - name: TZ
+              value: Asia/Jakarta
+          volumeMounts:
+            - name: node-red-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: node-red-data
+          emptyDir: {}

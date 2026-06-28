@@ -64,6 +64,76 @@ class NotificationModel extends BaseModel
         return $this->getById($insertId);
     }
 
+    /**
+     * Spec §10 S6 — notify citizens when ML publishes anomaly.alert (waspada/bencana).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function createFromAnomaly(array $payload): array
+    {
+        $tipe = strtolower((string) ($payload['tipePeringatan'] ?? $payload['hasil_prediksi'] ?? 'normal'));
+        if ($tipe === 'normal') {
+            return [];
+        }
+
+        $idSungai = (int) ($payload['idSungai'] ?? 0);
+        $sungaiLabel = $this->lookupSungaiLabel($idSungai);
+        $prob = isset($payload['nilaiProbabilitas'])
+            ? round((float) $payload['nilaiProbabilitas'] * 100, 1)
+            : null;
+
+        $severity = $tipe === 'bencana' ? 'BENCANA' : 'WASPADA';
+        $title = "Peringatan {$severity} — {$sungaiLabel}";
+        $body = $prob !== null
+            ? "Sistem mendeteksi risiko banjir ({$severity}) di {$sungaiLabel}. Probabilitas: {$prob}%."
+            : "Sistem mendeteksi risiko banjir ({$severity}) di {$sungaiLabel}. Segera waspada.";
+
+        $created = [];
+        foreach ($this->getCitizenUserIds() as $userId) {
+            $insertId = $this->create([
+                'idPengguna' => $userId,
+                'title' => $title,
+                'body' => mb_substr($body, 0, 500),
+                'is_read' => 0,
+            ]);
+            $row = $this->getById($insertId);
+            if ($row) {
+                $created[] = $row;
+            }
+        }
+
+        return $created;
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function getCitizenUserIds(): array
+    {
+        $stmt = $this->getConnection()->query(
+            "SELECT id FROM user_user WHERE role = 'user' ORDER BY id"
+        );
+        $rows = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+        return array_map('intval', $rows ?: []);
+    }
+
+    private function lookupSungaiLabel(int $idSungai): string
+    {
+        if ($idSungai <= 0) {
+            return 'zona terdampak';
+        }
+
+        $stmt = $this->getConnection()->prepare(
+            'SELECT lokasiSungai FROM river_sungai WHERE id = :id LIMIT 1'
+        );
+        $stmt->bindValue(':id', $idSungai, PDO::PARAM_INT);
+        $stmt->execute();
+        $name = $stmt->fetchColumn();
+
+        return $name ? (string) $name : "Sungai #{$idSungai}";
+    }
+
     public function getById(int $id): ?array
     {
         $stmt = $this->getConnection()->prepare(
