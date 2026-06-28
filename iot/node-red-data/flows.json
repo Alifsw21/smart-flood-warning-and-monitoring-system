@@ -11,8 +11,8 @@
         "id": "40c7d09bf38b6c41",
         "type": "mqtt-broker",
         "name": "iot-mqtt-broker",
-        "broker": "$(IOT_MQTT_BROKER)",
-        "port": "$(IOT_MQTT_PORT)",
+        "broker": "broker.hivemq.com",
+        "port": "1883",
         "clientid": "node-red-s1",
         "autoConnect": true,
         "usetls": false,
@@ -43,7 +43,11 @@
         "type": "inject",
         "z": "9e198921d7badae7",
         "name": "Bootstrap OAuth",
-        "props": [{ "p": "payload" }],
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
         "repeat": "3300",
         "crontab": "",
         "once": true,
@@ -53,7 +57,11 @@
         "payloadType": "date",
         "x": 150,
         "y": 60,
-        "wires": [["b1oauth000body01"]]
+        "wires": [
+            [
+                "b1oauth000body01"
+            ]
+        ]
     },
     {
         "id": "b1oauth000body01",
@@ -69,7 +77,11 @@
         "libs": [],
         "x": 380,
         "y": 60,
-        "wires": [["b1oauth000http01"]]
+        "wires": [
+            [
+                "b1oauth000http01"
+            ]
+        ]
     },
     {
         "id": "b1oauth000http01",
@@ -89,7 +101,11 @@
         "headers": [],
         "x": 620,
         "y": 60,
-        "wires": [["b1oauth000store1"]]
+        "wires": [
+            [
+                "b1oauth000store1"
+            ]
+        ]
     },
     {
         "id": "b1oauth000store1",
@@ -105,7 +121,9 @@
         "libs": [],
         "x": 870,
         "y": 60,
-        "wires": [[]]
+        "wires": [
+            []
+        ]
     },
     {
         "id": "b1mqtt000sungai1",
@@ -122,7 +140,11 @@
         "inputs": 0,
         "x": 140,
         "y": 200,
-        "wires": [["b1merge000func01"]]
+        "wires": [
+            [
+                "b1merge000func01"
+            ]
+        ]
     },
     {
         "id": "b1mqtt000cuaca01",
@@ -139,7 +161,11 @@
         "inputs": 0,
         "x": 140,
         "y": 280,
-        "wires": [["b1merge000func01"]]
+        "wires": [
+            [
+                "b1merge000func01"
+            ]
+        ]
     },
     {
         "id": "b1merge000func01",
@@ -155,14 +181,22 @@
         "libs": [],
         "x": 390,
         "y": 240,
-        "wires": [["1e48fef7ceee4735"]]
+        "wires": [
+            [
+                "1e48fef7ceee4735"
+            ]
+        ]
     },
     {
         "id": "b1queue000drain1",
         "type": "inject",
         "z": "9e198921d7badae7",
         "name": "Drain IoT queue",
-        "props": [{ "p": "payload" }],
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
         "repeat": "15",
         "crontab": "",
         "once": false,
@@ -172,7 +206,11 @@
         "payloadType": "date",
         "x": 150,
         "y": 380,
-        "wires": [["b1queue000pop01"]]
+        "wires": [
+            [
+                "b1queue000pop01"
+            ]
+        ]
     },
     {
         "id": "b1queue000pop01",
@@ -188,7 +226,11 @@
         "libs": [],
         "x": 390,
         "y": 380,
-        "wires": [["1e48fef7ceee4735"]]
+        "wires": [
+            [
+                "1e48fef7ceee4735"
+            ]
+        ]
     },
     {
         "id": "1e48fef7ceee4735",
@@ -204,7 +246,11 @@
         "libs": [],
         "x": 640,
         "y": 280,
-        "wires": [["28b696ed12141cdb"]]
+        "wires": [
+            [
+                "28b696ed12141cdb"
+            ]
+        ]
     },
     {
         "id": "28b696ed12141cdb",
@@ -224,7 +270,11 @@
         "headers": [],
         "x": 880,
         "y": 280,
-        "wires": [["b1queue000handle1"], ["b1queue000enqueue1"]]
+        "wires": [
+            [
+                "b1queue000handle1"
+            ]
+        ]
     },
     {
         "id": "b1queue000handle1",
@@ -240,7 +290,11 @@
         "libs": [],
         "x": 1130,
         "y": 260,
-        "wires": [["dd83bd8d64b52cae"]]
+        "wires": [
+            [
+                "dd83bd8d64b52cae"
+            ]
+        ]
     },
     {
         "id": "b1queue000enqueue1",
@@ -256,7 +310,9 @@
         "libs": [],
         "x": 1130,
         "y": 320,
-        "wires": [[]]
+        "wires": [
+            []
+        ]
     },
     {
         "id": "dd83bd8d64b52cae",
