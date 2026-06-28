@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+  namespace: smartcity
+  labels:
+    app.kubernetes.io/part-of: smart-flood-warning
+data:
+  mosquitto.conf: |
+    listener 1883
+    allow_anonymous true
+    persistence false

@@ -14,4 +14,7 @@ resources:
   - python-ml-deployment.yaml
   - gateway-deployment.yaml
   - php-analytics-consumer-deployment.yaml
+  - workers-deployments.yaml
+  - mosquitto-configmap.yaml
   - hpa.yaml
+  - ingress.yaml
