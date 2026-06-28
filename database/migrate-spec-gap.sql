@@ -1,9 +1,8 @@
--- Incremental migration for feat/spec-gap-closure
--- Run on existing kelompok2 DB: docker exec -i smartcity-mysql mysql -uroot -pRootSecret kelompok2 < database/migrate-spec-gap.sql
+-- Incremental migration for existing kelompok2 DB volumes (fresh installs use schema.sql only).
+-- Run: make migrate
 
 USE kelompok2;
 
--- Add laporan status column (ignore error if already exists)
 SET @col_exists := (
   SELECT COUNT(*) FROM information_schema.COLUMNS
   WHERE TABLE_SCHEMA = 'kelompok2' AND TABLE_NAME = 'user_laporan' AND COLUMN_NAME = 'status'
@@ -28,5 +27,18 @@ CREATE TABLE IF NOT EXISTS user_notifications(
     INDEX idx_user_notif_read (is_read)
 );
 
+SET @refresh_col := (
+  SELECT COUNT(*) FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = 'kelompok2' AND TABLE_NAME = 'auth_oauthToken' AND COLUMN_NAME = 'refresh_expires_at'
+);
+SET @sql_refresh := IF(@refresh_col = 0,
+  'ALTER TABLE auth_oauthToken ADD COLUMN refresh_expires_at TIMESTAMP NULL AFTER expires_at',
+  'SELECT 1'
+);
+PREPARE stmt_refresh FROM @sql_refresh;
+EXECUTE stmt_refresh;
+DEALLOCATE PREPARE stmt_refresh;
+
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_notifications TO 'user'@'%';
+GRANT SELECT ON kelompok2.river_zones TO 'user'@'%';
 FLUSH PRIVILEGES;

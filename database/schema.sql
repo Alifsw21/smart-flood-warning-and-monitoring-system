@@ -73,6 +73,7 @@ CREATE TABLE auth_oauthToken(
     access_token VARCHAR(255) UNIQUE NOT NULL,
     refresh_token VARCHAR(255) UNIQUE,
     expires_at TIMESTAMP NOT NULL,
+    refresh_expires_at TIMESTAMP NULL,
     FOREIGN KEY (user_id) REFERENCES user_user(id),
     INDEX idx_auth_token_access (access_token)
 );
@@ -140,6 +141,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_laporan TO 'user'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_notifications TO 'user'@'%';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.user_riwayatBanjir TO 'user'@'%';
 GRANT SELECT ON kelompok2.river_sungai TO 'user'@'%';
+GRANT SELECT ON kelompok2.river_zones TO 'user'@'%';
 
 CREATE USER IF NOT EXISTS 'analytics'@'%' IDENTIFIED BY 'AnalyticSecret';
 GRANT SELECT, INSERT, UPDATE, DELETE ON kelompok2.analytics_peringatan TO 'analytics'@'%';
