@@ -878,7 +878,7 @@ Contoh body ada di setiap request POST/PUT/PATCH. Skema ML lengkap: `http://loca
 Sesuai spesifikasi server lab:
 
 ```bash
-ssh -p 8989 mahasiswa@103.147.92.134
+ssh -p 8989 mahasiswa@103.147.92.135
 cd ~/Kelompok2A_SmartFloodDetection   # atau folder kelompok Anda
 
 git clone https://github.com/Alifsw21/smart-flood-warning-and-monitoring-system.git .  # jika belum ada
