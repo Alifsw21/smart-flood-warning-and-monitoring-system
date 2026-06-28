@@ -594,7 +594,7 @@ docker compose ps
 curl http://localhost:3530/health
 ```
 
-**Port alokasi kelompok (server lab):** 3530 (Gateway), 3532 (OAuth), 8150/8151/8154 (PHP), 5012 (ML), 3352 (MySQL), 5674/15674 (RabbitMQ), 6382 (Redis), 9092 (Prometheus), 3014 (Grafana), 8082 (cAdvisor).
+**Port alokasi kelompok (server lab):** 3530 (Gateway), 3532 (OAuth), 8150/8151/8154 (PHP), 5012 (ML), 3352 (MySQL), 5674/15674 (RabbitMQ), 6382 (Redis), 1886 (MQTT), 1890 (Node-RED), 9092 (Prometheus), 3014 (Grafana), 8082 (cAdvisor).
 
 **Aturan keamanan server:**
 - Jangan commit `.env` atau kredensial ke Git
