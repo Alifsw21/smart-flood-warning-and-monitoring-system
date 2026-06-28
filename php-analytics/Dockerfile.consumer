@@ -2,8 +2,10 @@ FROM php:8.2-cli
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
+    libonig-dev \
     unzip \
     && docker-php-ext-install pdo_mysql sockets zip \
+    && if ! php -m | grep -qi '^mbstring$'; then docker-php-ext-install mbstring; fi \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
