@@ -1,4 +1,4 @@
-.PHONY: help compose-up compose-down compose-dev test test-all seed build-images
+.PHONY: help compose-up compose-down compose-dev test test-all seed migrate build-images
 
 COMPOSE ?= docker compose
 
@@ -9,6 +9,7 @@ help:
 	@echo "  make compose-dev    Start stack with dev overrides"
 	@echo "  make test-all       Run all service test suites"
 	@echo "  make seed           Regenerate database/seed.sql"
+	@echo "  make migrate        Apply migrate-spec-gap.sql to running MySQL"
 	@echo "  make build-images   Build Kubernetes-tagged images"
 
 compose-up:

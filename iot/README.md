@@ -10,7 +10,7 @@ Spesifikasi: **Tugas Besar §4.6** · skenario uji **S1** (MQTT → Node-RED →
 | `passwd.dev` | Kredensial dev (`iot_device` / `iot_secret`) — jangan commit `passwd` produksi |
 | `node-red-data/flows.json` | Flow S1: subscribe sungai+cuaca, merge, OAuth, POST `/iot/traffic` |
 | `simulator.py` | Simulator Python (tanpa hardware) |
-| `Sensor Air/`, `Sensor Cuaca/` | Firmware Wokwi/ESP32 (alternatif simulator) |
+| `Sensor Air/`, `Sensor suhu dan cuaca/` | Firmware Wokwi/ESP32 (alternatif simulator) |
 | `tests/s1-e2e.sh` | Uji E2E otomatis S1 |
 
 ## Topik MQTT (kelompok 2)
@@ -34,16 +34,16 @@ docker compose up -d mosquitto oauth-server express-gateway php-river node-red \
 # Tunggu ~30 detik, lalu uji S1
 bash iot/tests/s1-e2e.sh
 
-# Simulator Python (background)
-MQTT_HOST=localhost python3 iot/simulator.py
+# Simulator Python (background, dari host — port MQTT 1886)
+MQTT_HOST=localhost MQTT_PORT=1886 python3 iot/simulator.py
 ```
 
 Atau one-shot publish untuk debug:
 
 ```bash
-mosquitto_pub -h localhost -t kelompok2/sensors/sungai \
+mosquitto_pub -h localhost -p 1886 -t kelompok2/sensors/sungai \
   -m '{"idNode":1,"tinggiAir":2.5,"kelembapanTanah":50}'
-mosquitto_pub -h localhost -t kelompok2/sensors/cuaca \
+mosquitto_pub -h localhost -p 1886 -t kelompok2/sensors/cuaca \
   -m '{"idNode":2,"curahHujan":10,"suhuRataRata":28,"kelembapanUdara":70,"kecepatanAngin":8}'
 ```
 
@@ -51,7 +51,7 @@ mosquitto_pub -h localhost -t kelompok2/sensors/cuaca \
 
 | Mode | Broker MQTT | Kapan dipakai |
 |------|-------------|---------------|
-| **Wokwi** (dev) | `broker.hivemq.com` publik | Prototype firmware di `Sensor Air/`, `Sensor Cuaca/` |
+| **Wokwi** (dev) | `broker.hivemq.com` publik | Prototype firmware di `Sensor Air/`, `Sensor suhu dan cuaca/` |
 | **Compose / server** | `mosquitto:1883` (service `mosquitto`) | S1, demo, course server |
 
 Untuk deploy: set `IS_DEPLOYED = true` di firmware dan isi `secrets.h` (MQTT host, user, pass). Di compose, broker = hostname `mosquitto`.
@@ -117,7 +117,7 @@ Cek di log Node-RED harus ada koneksi ke `broker.hivemq.com`, bukan `mosquitto`:
 docker logs smartcity-node-red 2>&1 | grep -i mqtt
 ```
 
-Jalankan Wokwi (Sensor Air + Sensor Cuaca), tunggu publish `kelompok2/sensors/sungai` dan `cuaca` — Node-RED harus merge dan POST ke Gateway.
+Jalankan Wokwi (`Sensor Air` + `Sensor suhu dan cuaca`), tunggu publish `kelompok2/sensors/sungai` dan `cuaca` — Node-RED harus merge dan POST ke Gateway.
 
 **Untuk demo S1 di server kursus / tanpa internet:** pakai default `IOT_MQTT_BROKER=mosquitto` + `python3 iot/simulator.py`.
 
@@ -125,14 +125,14 @@ Jalankan Wokwi (Sensor Air + Sensor Cuaca), tunggu publish `kelompok2/sensors/su
 | Sumber data | Broker yang dipakai | Kelihatan di compose? |
 |-------------|---------------------|------------------------|
 | **Wokwi** (`IS_DEPLOYED=false`) | `broker.hivemq.com` (internet) | **Tidak** — bukan `mosquitto` lokal |
-| **`iot/simulator.py`** dengan `MQTT_HOST=localhost` | Mosquitto Docker port 1883 | **Ya** |
+| **`iot/simulator.py`** dengan `MQTT_HOST=localhost MQTT_PORT=1886` | Mosquitto Docker (host **1886**) | **Ya** |
 | **Node-RED / python-ml** di compose | `mosquitto:1883` (internal) | **Ya** |
 
 Firmware Wokwi **tidak** mengirim ke Mosquitto lokal. Untuk uji S1 di Docker, jalankan simulator Python:
 
 ```bash
 docker compose up -d mosquitto node-red express-gateway oauth-server php-river mysql
-MQTT_HOST=localhost python3 iot/simulator.py
+MQTT_HOST=localhost MQTT_PORT=1886 python3 iot/simulator.py
 ```
 
 ### Cek cepat (3 langkah)
@@ -164,7 +164,7 @@ Opsi C — tetap HiveMQ untuk Wokwi saja; itu terpisah dari stack Docker compose
 
 ```bash
 # butuh mosquitto-clients (brew install mosquitto) atau pakai mqtt-smoke.sh
-mosquitto_sub -h localhost -t 'kelompok2/sensors/#' -v
+mosquitto_sub -h localhost -p 1886 -t 'kelompok2/sensors/#' -v
 ```
 
-Di terminal lain: `MQTT_HOST=localhost python3 iot/simulator.py`
+Di terminal lain: `MQTT_HOST=localhost MQTT_PORT=1886 python3 iot/simulator.py`
