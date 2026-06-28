@@ -44,7 +44,7 @@ $sendHealthResponse = function (int $code, bool $healthy, string $message): void
     echo json_encode([
         'status' => $healthy ? 'success' : 'error',
         'code' => $code,
-        'data' => ['database' => $healthy ? 'connected' : 'disconnected'],
+        'data' => ['db' => $healthy ? 'connected' : 'disconnected'],
         'message' => $message,
         'timestamp' => (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z'),
         'service' => 'php-river',
