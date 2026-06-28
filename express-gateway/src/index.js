@@ -104,6 +104,8 @@ const bootstrap = async () => {
 
   app.use('/api/auth', proxyWithPrefix(upstreams.oauth, '/api/auth'));
   app.use('/oauth/token', proxyWithPrefix(upstreams.oauth, '/oauth/token'));
+  app.use('/oauth/introspect', proxyToPath(upstreams.oauth, '/oauth/introspect'));
+  app.use('/oauth/revoke', proxyToPath(upstreams.oauth, '/oauth/revoke'));
 
   app.use(authMiddleware);
   app.use(authLimiter);
@@ -126,6 +128,7 @@ const bootstrap = async () => {
   }));
 
   app.use('/api/notifications', proxyWithPrefix(upstreams.user, '/api/notifications'));
+  app.use('/api/flood-history', proxyWithPrefix(upstreams.user, '/api/flood-history'));
 
   app.use('/api/river', proxyWithPrefix(upstreams.river, '/api/river'));
   app.use('/api/environment/alerts', proxyWithPrefix(upstreams.analytics, '/api/environment/alerts'));
