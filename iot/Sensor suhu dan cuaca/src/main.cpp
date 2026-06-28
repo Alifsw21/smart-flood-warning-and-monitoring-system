@@ -2,11 +2,19 @@
 #include <PubSubClient.h>
 #include <DHT.h>
 #include <ArduinoJson.h>
+#include "secrets.h"
 
 const char* ssid = "Wokwi-GUEST";
-const char* mqtt_server = "broker.hivemq.com";
+const bool IS_DEPLOYED = false;
+
+const char* mqtt_server = IS_DEPLOYED ? SECRET_MQTT_SERVER_PUB : "broker.hivemq.com";
 const int mqtt_port = 1883;
+const char* mqtt_user = SECRET_MQTT_USER_2;
+const char* mqtt_pass = SECRET_MQTT_PASS_2;
 const char* DEVICE_ID = "Sensor-banjir-cuaca2";
+
+unsigned long lastMsg = 0;
+unsigned long lastReconnectAttempt = 0;
 
 #define POTENTIO_PIN 34 
 
@@ -14,9 +22,9 @@ DHT dht(4, DHT22);
 WiFiClient espClient;
 PubSubClient client(espClient);
 
-unsigned long lastMsg = 0;
-
 void publishSensorData() {
+  if (!client.connected()) return;
+
   float t_avg = dht.readTemperature();
   float rh_avg = dht.readHumidity();
 
@@ -50,20 +58,31 @@ void publishSensorData() {
   char payload[1024];
   serializeJson(doc, payload);
 
-  client.publish("kelompok2/sensors/cuaca", payload, true);
-  Serial.println("Node 2 Mengirim: " + String(payload));
+  if (client.publish("kelompok2/sensors/cuaca", payload, true)) {
+    Serial.println("Data terkirim: " + String(payload));
+  } else {
+    Serial.println("Gagal kirim data");
+  }
 }
 
 void reconnect() {
-  while (!client.connected()) {
+  unsigned long now = millis();
+
+  if (now - lastReconnectAttempt > 5000) {
+    lastReconnectAttempt = now;
     Serial.print("Mencoba koneksi MQTT...");
-    if (client.connect(DEVICE_ID)) {
+
+    bool success = IS_DEPLOYED ?
+                   client.connect(DEVICE_ID, mqtt_user, mqtt_pass) :
+                   client.connect(DEVICE_ID);
+    
+    if (success) { 
       Serial.println("TERHUBUNG!");
+      lastReconnectAttempt = 0;
     } else {
       Serial.print("gagal, reconnect=");
       Serial.print(client.state());
       Serial.println(" coba lagi dalam 5 detik");
-      delay(5000);
     }
   }
 }
@@ -87,8 +106,9 @@ void setup() {
 void loop() {
   if (!client.connected()) {
     reconnect();
+  } else {
+    client.loop();
   }
-  client.loop();
 
   unsigned long now = millis();
   if (now - lastMsg > 5000) {

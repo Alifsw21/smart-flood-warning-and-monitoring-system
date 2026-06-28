@@ -58,6 +58,7 @@ services:
       - "1883:1883"
     volumes:
       - ./iot/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./iot/passwd.dev:/mosquitto/config/passwd:ro
     networks:
       - smartcity-net
 
@@ -308,6 +309,26 @@ services:
       - "3000:3000"
     networks:
       - smartcity-net
+
+  node-red:
+    image: nodered/node-red:3.1
+    container_name: smartcity-node-red
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./iot/node-red-data:/data
+    environment:
+      OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-GatewaySecretDev123}
+      IOT_MQTT_BROKER: ${IOT_MQTT_BROKER:-mosquitto}
+      IOT_MQTT_PORT: ${IOT_MQTT_PORT:-1883}
+    networks:
+      - smartcity-net
+    depends_on:
+      - mosquitto
+      - oauth-server
+      - express-gateway
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.2
