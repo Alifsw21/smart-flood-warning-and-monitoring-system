@@ -74,7 +74,7 @@ Sensor IoT / Simulator
 | Python | 3.11+ | Opsional — training model lokal |
 | kubectl | — | Opsional — deploy Kubernetes |
 
-**Port lokal yang harus bebas:** `3530`, `3531`, `5010`, `5672`, `8150`, `8151`, `8152`, `1890`, `1883`, `3350`, `9090`, `3001`.
+**Port host yang dipakai (server lab kelompok 2):** `3530`, `3532`, `5012`, `5674`, `8150`, `8151`, `8154`, `1890`, `1883`, `3352`, `6382`, `9092`, `3014`, `8082`, `15674`.
 
 ---
 
@@ -191,22 +191,22 @@ smart-flood-warning-and-monitoring-system/
 | Layanan | Container | Port host | Fungsi |
 |---------|-----------|-----------|--------|
 | **express-gateway** | `smartcity-gateway` | **3530** | Pintu masuk tunggal API |
-| **oauth-server** | `smartcity-oauth` | **3531** | `/oauth/token`, introspect, revoke |
+| **oauth-server** | `smartcity-oauth` | **3532** | `/oauth/token`, introspect, revoke |
 | **php-user** | `smartcity-php-user` | **8150** | Warga, laporan, notifikasi, riwayat banjir |
 | **php-river** | `smartcity-php-river` | **8151** | Zona, sungai, node sensor, pembacaan |
-| **php-analytics** | `smartcity-php-analytics` | **8152** | Peringatan (`analytics_peringatan`) |
-| **python-ml-service** | `smartcity-ml` | **5010** | Prediksi ML (FastAPI) |
-| **MySQL** | `smartcity-mysql` | **3350** | Database `kelompok2` |
-| **RabbitMQ** | `smartcity-rabbitmq` | **5672** / UI **15672** | Message broker |
-| **Redis** | `smartcity-redis` | **6379** | Rate limiting gateway |
+| **php-analytics** | `smartcity-php-analytics` | **8154** | Peringatan (`analytics_peringatan`) |
+| **python-ml-service** | `smartcity-ml` | **5012** | Prediksi ML (FastAPI) |
+| **MySQL** | `smartcity-mysql` | **3352** | Database `kelompok2` |
+| **RabbitMQ** | `smartcity-rabbitmq` | **5674** / UI **15674** | Message broker |
+| **Redis** | `smartcity-redis` | **6382** | Rate limiting gateway |
 | **Mosquitto** | `smartcity-mosquitto` | **1883** | Broker MQTT |
 | **Node-RED** | `smartcity-node-red` | **1890** | Bridge MQTT → REST |
 | **iot-simulator** | `smartcity-iot-simulator` | — | Publish sensor periodik |
-| **Prometheus** | `smartcity-prometheus` | **9090** | Metrik |
-| **Grafana** | `smartcity-grafana` | **3001** | Dashboard |
-| **cAdvisor** | `smartcity-cadvisor` | **8080** | Metrik container |
+| **Prometheus** | `smartcity-prometheus` | **9092** | Metrik |
+| **Grafana** | `smartcity-grafana` | **3014** | Dashboard |
+| **cAdvisor** | `smartcity-cadvisor` | **8082** | Metrik container |
 
-> Akses API eksternal selalu melalui **Gateway :3530**, kecuali OAuth langsung (:3531) atau UI monitoring.
+> Akses API eksternal selalu melalui **Gateway :3530**, kecuali OAuth langsung (:3532) atau UI monitoring.
 
 **Worker (tanpa port publik):**
 
@@ -407,7 +407,7 @@ Exchange utama: **`city.events`** (topic)
 | `anomaly.alert` | `citizen.anomaly.alert` | (fan-out) | php-user-notification-consumer |
 | `report.submitted` | `report.submitted` | php-user | php-user-notification-consumer |
 
-UI manajemen: http://localhost:15672 (`smartcity` / `RabbitSecret`)
+UI manajemen: http://localhost:15674 (`smartcity` / `RabbitSecret`)
 
 ---
 
@@ -481,8 +481,8 @@ Notebook EDA: `python-ml-service/notebooks/EDA1.ipynb`, `EDA2.ipynb`
 
 | URL | Keterangan |
 |-----|------------|
-| http://localhost:9090 | Prometheus |
-| http://localhost:3001 | Grafana (`admin` / `admin`) |
+| http://localhost:9092 | Prometheus |
+| http://localhost:3014 | Grafana (`admin` / `admin`) |
 
 Dashboard: *Smart City Platform Monitoring* — request rate, error rate, latency, CPU, memory container.
 
@@ -589,7 +589,7 @@ docker compose ps
 curl http://localhost:3530/health
 ```
 
-**Port alokasi kelompok:** 3530 (Gateway), 3531 (OAuth), 8150–8152 (PHP), 5010 (ML).
+**Port alokasi kelompok (server lab):** 3530 (Gateway), 3532 (OAuth), 8150/8151/8154 (PHP), 5012 (ML), 3352 (MySQL), 5674/15674 (RabbitMQ), 6382 (Redis), 9092 (Prometheus), 3014 (Grafana), 8082 (cAdvisor).
 
 **Aturan keamanan server:**
 - Jangan commit `.env` atau kredensial ke Git
@@ -646,7 +646,7 @@ docker compose up -d python-ml-service
 
 ### MySQL connection refused dari host
 
-Gunakan port **3350** (bukan 3306) saat koneksi dari luar container.
+Gunakan port **3352** (bukan 3306) saat koneksi dari luar container.
 
 ---
 

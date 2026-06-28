@@ -1,7 +1,7 @@
 services:
   mysql:
     ports:
-      - "3350:3306"
+      - "3352:3306"
 
   oauth-server:
     environment:

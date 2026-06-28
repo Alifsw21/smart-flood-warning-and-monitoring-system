@@ -7,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-RootSecret}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-kelompok2}
     ports:
-      - "3350:3306"
+      - "3352:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -29,8 +29,8 @@ services:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-smartcity}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5674:5672"
+      - "15674:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
@@ -46,7 +46,7 @@ services:
     container_name: smartcity-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6382:6379"
     networks:
       - smartcity-net
 
@@ -96,7 +96,7 @@ services:
       DB_PASSWORD: ${AUTH_DB_PASSWORD:-AuthSecret}
       DB_NAME: ${MYSQL_DATABASE:-kelompok2}
     ports:
-      - "3531:3531"
+      - "3532:3531"
     networks:
       - smartcity-net
 
@@ -190,7 +190,7 @@ services:
       DB_USER: analytics
       DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
     ports:
-      - "8152:80"
+      - "8154:80"
     networks:
       - smartcity-net
 
@@ -247,7 +247,7 @@ services:
       ANALYTICS_DB_USER: analytics
       ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
     ports:
-      - "5010:8000"
+      - "5012:8000"
     networks:
       - smartcity-net
 
@@ -354,7 +354,7 @@ services:
     container_name: smartcity-cadvisor
     restart: unless-stopped
     ports:
-      - "8080:8080"
+      - "8082:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -371,7 +371,7 @@ services:
       - express-gateway
       - cadvisor
     ports:
-      - "9090:9090"
+      - "9092:9090"
     volumes:
       - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     networks:
@@ -388,7 +388,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
       GF_USERS_ALLOW_SIGN_UP: "false"
     ports:
-      - "3001:3000"
+      - "3014:3000"
     volumes:
       - grafana-data:/var/lib/grafana
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
