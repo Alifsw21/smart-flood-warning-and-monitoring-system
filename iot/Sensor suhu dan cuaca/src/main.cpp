@@ -8,13 +8,15 @@ const char* ssid = "Wokwi-GUEST";
 const bool IS_DEPLOYED = false;
 
 const char* mqtt_server = IS_DEPLOYED ? SECRET_MQTT_SERVER_PUB : "broker.hivemq.com";
-const int mqtt_port = IS_DEPLOYED ? 1886 : 1883;
+const int mqtt_port = 1883;
+const char* mqtt_user = SECRET_MQTT_USER_2;
+const char* mqtt_pass = SECRET_MQTT_PASS_2;
 const char* DEVICE_ID = "Sensor-banjir-cuaca2";
 
 unsigned long lastMsg = 0;
 unsigned long lastReconnectAttempt = 0;
 
-#define POTENTIO_PIN 34 
+#define POTENTIO_PIN 34
 
 DHT dht(4, DHT22);
 WiFiClient espClient;
@@ -27,7 +29,7 @@ void publishSensorData() {
   float rh_avg = dht.readHumidity();
 
   int raw_pot = analogRead(POTENTIO_PIN);
-  float rainfall = (raw_pot / 4095.0) * 50.0; 
+  float rainfall = (raw_pot / 4095.0) * 50.0;
 
   if (isnan(t_avg) || isnan(rh_avg)) {
     Serial.println("Gagal membaca DHT22");
@@ -41,7 +43,7 @@ void publishSensorData() {
   float ddd_x = 193.5 + (random(-200, 201) / 10.0);
   float ff_avg = 2.3 + (random(-10, 11) / 10.0);
 
-  StaticJsonDocument<1024> doc; 
+  StaticJsonDocument<1024> doc;
   doc["idNode"] = 2;
   doc["curahHujan"] = rainfall;
   doc["suhuMin"] = tn;
@@ -70,9 +72,11 @@ void reconnect() {
     lastReconnectAttempt = now;
     Serial.print("Mencoba koneksi MQTT...");
 
-    bool success = client.connect(DEVICE_ID);
-    
-    if (success) { 
+    bool success = IS_DEPLOYED
+                   ? client.connect(DEVICE_ID, mqtt_user, mqtt_pass)
+                   : client.connect(DEVICE_ID);
+
+    if (success) {
       Serial.println("TERHUBUNG!");
       lastReconnectAttempt = 0;
     } else {
@@ -85,7 +89,7 @@ void reconnect() {
 
 void setup() {
   Serial.begin(115200);
-  
+
   pinMode(POTENTIO_PIN, INPUT);
   dht.begin();
 
