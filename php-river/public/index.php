@@ -95,7 +95,7 @@ if (preg_match('#^/api/river/sensors/([^/]+)$#', $path, $matches)) {
     if ($method === 'GET') {
         $sensorNodeController->show($id);
     }
-    if ($method === 'PUT') {
+    if ($method === 'PATCH') {
         $sensorNodeController->update($id, $userRole);
     }
     if ($method === 'DELETE') {

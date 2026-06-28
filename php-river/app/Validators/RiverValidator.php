@@ -107,4 +107,23 @@ class RiverValidator {
 
         return $data;
     }
+
+    public static function validateNodeUpdate(array $data): array {
+        if (empty($data)) {
+            throw new \InvalidArgumentException("Tidak ada data yang dikirim untuk diperbarui.");
+        }
+
+        if (isset($data['posisi']) && !in_array($data['posisi'], ['hulu', 'hilir'], true)) {
+            throw new \InvalidArgumentException("Field 'posisi' harus 'hulu' atau 'hilir'.");
+        }
+
+        $numericFields = ['idSungai', 'idStation', 'elevasi'];
+        foreach ($numericFields as $field) {
+            if (isset($data[$field]) && !is_numeric($data[$field])) {
+                throw new \InvalidArgumentException("Field '$field' harus berupa angka numerik.");
+            }
+        }
+
+        return $data;
+    }
 }

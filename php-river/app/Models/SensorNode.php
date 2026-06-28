@@ -51,7 +51,7 @@ class SensorNode extends BaseModel {
         } catch (PDOException $e) {
             if ($e->getCode() == 23000) { 
                 if (str_contains($e->getMessage(), '1062')) {
-                    throw new PDOException("Data Gagal Disimpan. ID Station '" . $data['idStation'] . "' Sudah Terdaftar Dalam Sistem.");
+                    throw new PDOException("Data Gagal Disimpan. ID Station '" . $data['idStation'] . "' Sudah Terdaftar Dalam Sistem.", (int) $e->getCode());
                 }
             }
             throw $e;
@@ -59,28 +59,30 @@ class SensorNode extends BaseModel {
     }
 
     public function updateNode($id, $data) {
-        try {
-            $query = "UPDATE river_sensorNode
-                    SET idSungai = :idSungai, idStation = :idStation, namaNode = :namaNode, posisi = :posisi, elevasi = :elevasi
-                    WHERE id = :id";
-            $stmt = $this->db->prepare($query);
-            return $stmt->execute([
-                ':id'   => $id,
-                ':idSungai' => $data['idSungai'],
-                ':idStation' => $data['idStation'],
-                ':namaNode' => $data['namaNode'],
-                ':posisi' => $data['posisi'],
-                ':elevasi' => $data['elevasi']
-            ]);
-        } catch (PDOException $e) {
-            if ($e->getCode() == 23000) { 
-                if (str_contains($e->getMessage(), '1062')) {
-                    throw new PDOException("Data Gagal Diperbarui. ID Station '" . $data['idStation'] . "' Sudah Terdaftar Dalam Sistem.");
-                }
-            }
-            throw $e;
+    try {
+        if (empty($data)) {
+            return false;
         }
+
+        $fields = [];
+        foreach ($data as $key => $value) {
+            $fields[] = $key . ' = :' . $key;
+        }
+
+        $setClause = implode(', ', $fields);
+        $query = "UPDATE river_sensorNode SET " . $setClause . " WHERE id = :id";
+
+        $stmt = $this->db->prepare($query);
+
+        $data['id'] = $id;
+        return $stmt->execute($data);
+    } catch (PDOException $e) {
+        if ($e->getCode() == 23000) {
+            throw new PDOException("Data gagal diperbarui. Terdapat konflik data (kemungkinan adanya duplikat atau referensi tidak valid).", (int) $e->getCode());
+        }
+        throw $e;
     }
+}
 
     public function deleteNode($id) {
         try {

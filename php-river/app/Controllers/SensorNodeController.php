@@ -82,7 +82,7 @@ class SensorNodeController extends BaseController {
                 return;
             }
 
-            $validated = RiverValidator::validateNode($inputData);
+            $validated = RiverValidator::validateNodeUpdate($inputData);
             $this->model->updateNode($id, $validated);
             $responseData = array_merge(["id" => $id], $validated);
             $responseData['timestamp'] = (new \DateTime('now', new \DateTimeZone('UTC')))->format('Y-m-d\TH:i:s.v\Z');
