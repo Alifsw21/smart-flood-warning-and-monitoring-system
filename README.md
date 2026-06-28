@@ -60,8 +60,6 @@ Sensor IoT / Simulator
 | Python ML | 3 model + deteksi anomali | `python-ml-service` |
 | IoT Layer | MQTT, Node-RED, simulator | `iot/` |
 
-Diagram lengkap (Mermaid): [`docs/architecture.md`](docs/architecture.md) — ekspor ke PNG/PDF untuk pengumpulan tugas.
-
 ---
 
 ## 2. Persyaratan
@@ -658,7 +656,7 @@ Gunakan port **3350** (bukan 3306) saat koneksi dari luar container.
 |----|------|--------|--------|
 | 1 | Source code | Repo GitHub | ✅ |
 | 2 | README setup < 15 menit | `README.md` (dokumen ini) | ✅ |
-| 3 | Diagram arsitektur | `docs/architecture.md` → ekspor PNG/PDF | ⚠️ ekspor manual |
+| 3 | Diagram arsitektur | — | 🔲 submit eksternal |
 | 4 | `schema.sql` | `database/schema.sql` | ✅ |
 | 5 | `seed.sql` | `database/seed.sql` | ✅ |
 | 6 | Postman collection | `postman/` | ✅ |
