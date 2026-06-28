@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Smart Flood Warning API",
-    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12).\n\nUsage:\n1. Set collection variables if needed (defaults target local docker compose via SSH tunnel: baseUrl=http://localhost:3530).\n2. Citizen requests auto-fetch {{accessToken}} (hadiputra2 / kelompok2dev).\n3. Admin-only requests auto-fetch {{adminAccessToken}} (dinasari1 / kelompok2dev).\n4. IoT folder auto-fetches client_credentials token (Node-RED S1 flow).\n5. Manual Auth requests remain available for debugging.",
+    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12).\n\nUsage:\n1. Set collection variables if needed (defaults target local docker compose via SSH tunnel: baseUrl=http://localhost:3530).\n2. Citizen requests auto-fetch {{accessToken}} (hadiputra2 / kelompok2dev).\n3. Admin-only requests auto-fetch {{adminAccessToken}} (dinasari1 / kelompok2dev).\n4. IoT folder auto-fetches client_credentials token (Node-RED S1 flow).\n5. Manual Auth requests remain available for debugging.\n6. Folder per layanan: Citizen, Traffic/Environment, River CRUD, Analytics, ML, IoT.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -39,7 +39,20 @@
           "",
           "const ADMIN_REQUESTS = new Set([",
           "    'GET /api/citizens (admin)',",
+          "    'POST /api/citizens (admin)',",
+          "    'DELETE /api/citizens/:id (admin)',",
           "    'PATCH /api/reports/:id/status (admin)',",
+          "    'DELETE /api/flood-history/:id (admin)',",
+          "    'DELETE /api/analytics/peringatan/:id (admin)',",
+          "    'POST /api/river/zones (admin)',",
+          "    'PUT /api/river/zones/:id (admin)',",
+          "    'DELETE /api/river/zones/:id (admin)',",
+          "    'POST /api/river/sungai (admin)',",
+          "    'PUT /api/river/sungai/:id (admin)',",
+          "    'DELETE /api/river/sungai/:id (admin)',",
+          "    'POST /api/river/sensors (admin)',",
+          "    'PUT /api/river/sensors/:id (admin)',",
+          "    'DELETE /api/river/sensors/:id (admin)',",
           "]);",
           "",
           "const isAdminRequest = () => ADMIN_REQUESTS.has(pm.info.requestName || '');",
@@ -194,26 +207,86 @@
     }
   ],
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3530" },
-    { "key": "oauthUrl", "value": "http://localhost:3531" },
-    { "key": "accessToken", "value": "" },
-    { "key": "refreshToken", "value": "" },
-    { "key": "accessTokenExpiresAt", "value": "0" },
-    { "key": "accessTokenGrantType", "value": "" },
-    { "key": "citizenClientId", "value": "citizen-app" },
-    { "key": "citizenClientSecret", "value": "CitizenSecretDev123" },
-    { "key": "gatewayClientId", "value": "gateway" },
-    { "key": "gatewayClientSecret", "value": "GatewaySecretDev123" },
-    { "key": "devUsername", "value": "hadiputra2" },
-    { "key": "devPassword", "value": "kelompok2dev" },
-    { "key": "adminUsername", "value": "dinasari1" },
-    { "key": "adminPassword", "value": "kelompok2dev" },
-    { "key": "adminAccessToken", "value": "" },
-    { "key": "adminRefreshToken", "value": "" },
-    { "key": "adminAccessTokenExpiresAt", "value": "0" },
-    { "key": "adminAccessTokenGrantType", "value": "" },
-    { "key": "iotAccessToken", "value": "" },
-    { "key": "iotAccessTokenExpiresAt", "value": "0" }
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3530"
+    },
+    {
+      "key": "oauthUrl",
+      "value": "http://localhost:3531"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "accessTokenExpiresAt",
+      "value": "0"
+    },
+    {
+      "key": "accessTokenGrantType",
+      "value": ""
+    },
+    {
+      "key": "citizenClientId",
+      "value": "citizen-app"
+    },
+    {
+      "key": "citizenClientSecret",
+      "value": "CitizenSecretDev123"
+    },
+    {
+      "key": "gatewayClientId",
+      "value": "gateway"
+    },
+    {
+      "key": "gatewayClientSecret",
+      "value": "GatewaySecretDev123"
+    },
+    {
+      "key": "devUsername",
+      "value": "hadiputra2"
+    },
+    {
+      "key": "devPassword",
+      "value": "kelompok2dev"
+    },
+    {
+      "key": "adminUsername",
+      "value": "dinasari1"
+    },
+    {
+      "key": "adminPassword",
+      "value": "kelompok2dev"
+    },
+    {
+      "key": "adminAccessToken",
+      "value": ""
+    },
+    {
+      "key": "adminRefreshToken",
+      "value": ""
+    },
+    {
+      "key": "adminAccessTokenExpiresAt",
+      "value": "0"
+    },
+    {
+      "key": "adminAccessTokenGrantType",
+      "value": ""
+    },
+    {
+      "key": "iotAccessToken",
+      "value": ""
+    },
+    {
+      "key": "iotAccessTokenExpiresAt",
+      "value": "0"
+    }
   ],
   "item": [
     {
@@ -245,16 +318,36 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
             "url": "{{baseUrl}}/oauth/token",
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                { "key": "grant_type", "value": "password" },
-                { "key": "username", "value": "{{devUsername}}" },
-                { "key": "password", "value": "{{devPassword}}" },
-                { "key": "client_id", "value": "{{citizenClientId}}" },
-                { "key": "client_secret", "value": "{{citizenClientSecret}}" }
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "username",
+                  "value": "{{devUsername}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{devPassword}}"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{citizenClientId}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{citizenClientSecret}}"
+                }
               ]
             }
           }
@@ -285,16 +378,36 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
             "url": "{{baseUrl}}/oauth/token",
             "body": {
               "mode": "urlencoded",
               "urlencoded": [
-                { "key": "grant_type", "value": "password" },
-                { "key": "username", "value": "{{adminUsername}}" },
-                { "key": "password", "value": "{{adminPassword}}" },
-                { "key": "client_id", "value": "{{citizenClientId}}" },
-                { "key": "client_secret", "value": "{{citizenClientSecret}}" }
+                {
+                  "key": "grant_type",
+                  "value": "password"
+                },
+                {
+                  "key": "username",
+                  "value": "{{adminUsername}}"
+                },
+                {
+                  "key": "password",
+                  "value": "{{adminPassword}}"
+                },
+                {
+                  "key": "client_id",
+                  "value": "{{citizenClientId}}"
+                },
+                {
+                  "key": "client_secret",
+                  "value": "{{citizenClientSecret}}"
+                }
               ]
             }
           }
@@ -321,7 +434,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/oauth/token",
             "body": {
               "mode": "raw",
@@ -355,7 +473,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/oauth/token",
             "body": {
               "mode": "raw",
@@ -390,7 +513,12 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/api/auth/login",
             "body": {
               "mode": "raw",
@@ -402,7 +530,12 @@
           "name": "GET /api/auth/profile",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/auth/profile"
           }
         },
@@ -410,7 +543,12 @@
           "name": "POST /oauth/introspect",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/oauth/introspect",
             "body": {
               "mode": "raw",
@@ -422,7 +560,12 @@
           "name": "POST /oauth/revoke",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": "{{baseUrl}}/oauth/revoke",
             "body": {
               "mode": "raw",
@@ -456,31 +599,129 @@
         },
         {
           "name": "Gateway Health",
-          "request": { "method": "GET", "url": "{{baseUrl}}/health" }
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
         },
         {
           "name": "GET /metrics",
-          "request": { "method": "GET", "url": "{{baseUrl}}/metrics" }
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/metrics"
+          }
         }
       ]
     },
     {
       "name": "Citizen (php-user)",
+      "description": "Warga, laporan, notifikasi, riwayat banjir.",
       "item": [
         {
           "name": "GET /api/citizens (admin)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/citizens"
+          }
+        },
+        {
+          "name": "GET /api/citizens/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/citizens/2"
+          }
+        },
+        {
+          "name": "POST /api/citizens (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/citizens",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"warga_baru\",\"email\":\"warga_baru@kelompok2.com\",\"password\":\"kelompok2dev\",\"role\":\"user\"}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /api/citizens/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/citizens/2",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"hadiputra2@kelompok2.com\"}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/citizens/:id (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/citizens/50"
           }
         },
         {
           "name": "GET /api/reports",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/reports"
+          }
+        },
+        {
+          "name": "GET /api/reports/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/reports/1"
           }
         },
         {
@@ -488,8 +729,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/api/reports",
             "body": {
@@ -499,22 +746,70 @@
           }
         },
         {
+          "name": "PATCH /api/reports/:id",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/reports/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"deskripsiLaporan\":\"Update laporan: kondisi sensor sudah dicek ulang warga setempat.\"}"
+            }
+          }
+        },
+        {
           "name": "PATCH /api/reports/:id/status (admin)",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/api/reports/1/status",
-            "body": { "mode": "raw", "raw": "{\"status\":\"in_progress\"}" }
+            "body": {
+              "mode": "raw",
+              "raw": "{\"status\":\"in_progress\"}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/reports/:id",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/reports/20"
           }
         },
         {
           "name": "GET /api/notifications",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/notifications"
           }
         },
@@ -522,37 +817,673 @@
           "name": "GET /api/flood-history",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/flood-history"
+          }
+        },
+        {
+          "name": "GET /api/flood-history/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/flood-history/1"
+          }
+        },
+        {
+          "name": "DELETE /api/flood-history/:id (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/flood-history/1"
           }
         }
       ]
     },
     {
       "name": "Traffic & Environment (php-river)",
+      "description": "Status real-time, riwayat, dan ingest pembacaan sensor (JWT).",
       "item": [
         {
           "name": "GET /api/traffic/current",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/traffic/current"
+          }
+        },
+        {
+          "name": "GET /api/traffic/current (filter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/traffic/current?zoneId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "traffic",
+                "current"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "1",
+                  "description": "Filter per zona",
+                  "disabled": false
+                }
+              ]
+            }
           }
         },
         {
           "name": "GET /api/environment/current",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/environment/current"
+          }
+        },
+        {
+          "name": "GET /api/environment/current (filter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/environment/current?zoneId=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "environment",
+                "current"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "1",
+                  "description": "Filter per zona",
+                  "disabled": false
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/traffic/history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/traffic/history",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "traffic",
+                "history"
+              ],
+              "query": [
+                {
+                  "key": "zoneId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-06-18",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-06-26",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/river/readings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/river/readings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "river",
+                "readings"
+              ],
+              "query": [
+                {
+                  "key": "nodeId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "zoneId",
+                  "value": "1",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/traffic/readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/traffic/readings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idNode\":1,\"tinggiAir\":2.5,\"kelembapanTanah\":60,\"curahHujan\":12,\"suhuRataRata\":28,\"kelembapanUdara\":77,\"kecepatanAngin\":10,\"arahAngin\":180}"
+            }
+          }
+        },
+        {
+          "name": "POST /api/environment/readings",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/environment/readings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idNode\":1,\"tinggiAir\":2.5,\"kelembapanTanah\":60,\"curahHujan\":12,\"suhuRataRata\":28,\"kelembapanUdara\":77,\"kecepatanAngin\":10,\"arahAngin\":180}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "River CRUD (php-river)",
+      "description": "Zona, sungai, node sensor — write/delete membutuhkan role admin.",
+      "item": [
+        {
+          "name": "GET /api/river/zones",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/zones"
+          }
+        },
+        {
+          "name": "GET /api/river/zones/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/zones/1"
+          }
+        },
+        {
+          "name": "POST /api/river/zones (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/zones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama_kota\":\"Zona Demo Postman\"}"
+            }
+          }
+        },
+        {
+          "name": "PUT /api/river/zones/:id (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/zones/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"nama_kota\":\"Zona Updated\"}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/river/zones/:id (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/zones/5"
+          }
+        },
+        {
+          "name": "GET /api/river/sungai",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sungai"
+          }
+        },
+        {
+          "name": "GET /api/river/sungai/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sungai/1"
+          }
+        },
+        {
+          "name": "POST /api/river/sungai (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sungai",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"zoneId\":1,\"lokasiSungai\":\"Sungai Demo Postman\"}"
+            }
+          }
+        },
+        {
+          "name": "PUT /api/river/sungai/:id (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sungai/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"zoneId\":1,\"lokasiSungai\":\"Sungai Ciliwung Updated\"}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/river/sungai/:id (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sungai/5"
+          }
+        },
+        {
+          "name": "GET /api/river/sensors",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sensors"
+          }
+        },
+        {
+          "name": "GET /api/river/sensors/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sensors/1"
+          }
+        },
+        {
+          "name": "GET /api/river/sensors/:id/readings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/river/sensors/1/readings",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "river",
+                "sensors",
+                "1",
+                "readings"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-06-01",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-06-30",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "POST /api/river/sensors (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sensors",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idSungai\":1,\"idStation\":99001,\"namaNode\":\"Node Demo\",\"posisi\":\"hulu\",\"elevasi\":5.5}"
+            }
+          }
+        },
+        {
+          "name": "PUT /api/river/sensors/:id (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sensors/1",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"idSungai\":1,\"idStation\":99002,\"namaNode\":\"Node Updated\",\"posisi\":\"hilir\",\"elevasi\":6}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/river/sensors/:id (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/river/sensors/10"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics (php-analytics)",
+      "description": "Analisis peringatan banjir (analytics_peringatan). Create otomatis via RabbitMQ anomaly.alert; pengguna Read-only; admin Read + Delete.",
+      "item": [
+        {
+          "name": "GET /api/analytics/peringatan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/analytics/peringatan",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "analytics",
+                "peringatan"
+              ],
+              "query": [
+                {
+                  "key": "idSungai",
+                  "value": "1",
+                  "description": "Filter per sungai",
+                  "disabled": true
+                },
+                {
+                  "key": "tipePeringatan",
+                  "value": "waspada",
+                  "description": "normal | waspada | bencana",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-06-01",
+                  "description": "Rentang waktu mulai",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-06-30",
+                  "description": "Rentang waktu akhir",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "GET /api/analytics/peringatan/:id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/analytics/peringatan/3"
           }
         },
         {
           "name": "GET /api/environment/alerts",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
-            "url": "{{baseUrl}}/api/environment/alerts"
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/environment/alerts",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "environment",
+                "alerts"
+              ],
+              "query": [
+                {
+                  "key": "idSungai",
+                  "value": "3",
+                  "description": "Filter per sungai",
+                  "disabled": true
+                },
+                {
+                  "key": "from",
+                  "value": "2026-06-01",
+                  "disabled": true
+                },
+                {
+                  "key": "to",
+                  "value": "2026-06-30",
+                  "disabled": true
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "DELETE /api/analytics/peringatan/:id (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/analytics/peringatan/1"
           }
         }
       ]
@@ -565,8 +1496,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/predict/banjir",
             "body": {
@@ -580,8 +1517,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/predict/curah-hujan",
             "body": {
@@ -595,8 +1538,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/predict/traffic",
             "body": {
@@ -610,8 +1559,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/predict/air-quality",
             "body": {
@@ -624,7 +1579,12 @@
           "name": "GET /predict/realtime/banjir",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/predict/realtime/banjir"
           }
         },
@@ -632,7 +1592,12 @@
           "name": "GET /predict/realtime/curah-hujan",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/predict/realtime/curah-hujan"
           }
         },
@@ -641,8 +1606,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/detect/anomaly",
             "body": {
@@ -655,7 +1626,12 @@
           "name": "GET /model/feature-importance",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/model/feature-importance"
           }
         },
@@ -664,8 +1640,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/predict/batch",
             "body": {
@@ -678,7 +1660,12 @@
           "name": "GET /api/sensor",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
             "url": "{{baseUrl}}/api/sensor"
           }
         }
@@ -741,8 +1728,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{iotAccessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{iotAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/iot/traffic",
             "body": {
@@ -756,8 +1749,14 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{iotAccessToken}}" },
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{iotAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
             "url": "{{baseUrl}}/iot/air",
             "body": {

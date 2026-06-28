@@ -455,7 +455,7 @@ Respons `429`: `"Too many requests"`.
 | POST                  | `/iot/air`                      | php-river     | Ingest IoT → `/api/environment/readings` |
 
 
-> Skema lengkap ML: `http://localhost:5012/docs` (Swagger FastAPI). Contoh body Postman: folder **Citizen**, **ML**, **IoT**.
+> Skema lengkap ML: `http://localhost:5012/docs` (Swagger FastAPI). Koleksi Postman: folder **Citizen**, **River CRUD**, **Analytics**, **ML**, **IoT**.
 
 ### Body request — endpoint demo (S1–S3)
 
@@ -855,9 +855,21 @@ make test-all
 2. Pastikan variabel `baseUrl` = `http://localhost:3530`
 3. Request terproteksi **otomatis** mengambil token via pre-request script (password grant + refresh fallback)
 4. Folder **IoT** memakai `client_credentials` (`gateway` / `GatewaySecretDev123`)
-5. Untuk route admin (mis. `PATCH /api/reports/:id/status`), ubah `devUsername` / `devPassword` jika akun admin tersedia
+5. Request admin otomatis memakai `{{adminAccessToken}}` (`dinasari1`) — lihat nama request berakhiran `(admin)`
 
-Koleksi mencakup: Auth, Citizen, Traffic/Environment, ML, IoT. Contoh body ada di setiap request POST. Endpoint CRUD river (`/api/river/*`) belum ada di koleksi — gunakan §10 atau Swagger ML `:5012/docs`.
+Koleksi mencakup semua endpoint gateway per layanan:
+
+| Folder | Cakupan |
+|--------|---------|
+| **Auth** | OAuth, login, profile, health, metrics |
+| **Citizen (php-user)** | CRUD warga, laporan, notifikasi, riwayat banjir |
+| **Traffic & Environment (php-river)** | Status real-time, history, ingest pembacaan |
+| **River CRUD (php-river)** | Zona, sungai, sensor node |
+| **Analytics (php-analytics)** | Peringatan banjir, alert aktif |
+| **ML (python-ml-service)** | Prediksi, deteksi anomali, model |
+| **IoT (Node-RED ingress)** | Ingest sensor via `client_credentials` |
+
+Contoh body ada di setiap request POST/PUT/PATCH. Skema ML lengkap: `http://localhost:5012/docs`.
 
 ---
 
