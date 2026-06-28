@@ -88,6 +88,8 @@ INSERT INTO auth_oauthClient (client_id, client_secret, grant_types) VALUES
 
 -- Dev credentials for OAuth password grant: hadiputra2 / kelompok2dev (user id 2)
 UPDATE user_user SET password = '$2b$10$L9laEb7yUiMFIO3xJgaKTue1/BtNBCAK2dLqKnS7.5QT6G1TNAneq' WHERE id = 2;
+-- Admin demo account uses the same dev password
+UPDATE user_user SET password = '$2b$10$L9laEb7yUiMFIO3xJgaKTue1/BtNBCAK2dLqKnS7.5QT6G1TNAneq' WHERE id = 1;
 
 -- 5. Data Laporan
 INSERT INTO user_laporan (id, idPengguna, deskripsiLaporan, waktuDibuat) VALUES (1, 8, 'Data ketinggian air di aplikasi terlambat update dibandingkan kondisi sungai aslinya.', '2026-06-07 23:31:52');

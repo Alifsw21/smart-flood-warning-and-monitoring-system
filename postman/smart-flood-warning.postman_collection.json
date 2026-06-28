@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Smart Flood Warning API",
-    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12).\n\nUsage:\n1. Set collection variables if needed (defaults target local docker compose).\n2. Protected requests auto-fetch {{accessToken}} via collection pre-request script (password grant, with refresh fallback).\n3. IoT folder auto-fetches client_credentials token (same flow as Node-RED S1).\n4. You can still run Auth requests manually to switch users or debug OAuth.\n5. For admin-only routes (e.g. GET /api/citizens), set devUsername/devPassword to an admin account (dinasari1).",
+    "description": "Postman collection for smart-flood-warning-and-monitoring-system (Spec §12).\n\nUsage:\n1. Set collection variables if needed (defaults target local docker compose via SSH tunnel: baseUrl=http://localhost:3530).\n2. Citizen requests auto-fetch {{accessToken}} (hadiputra2 / kelompok2dev).\n3. Admin-only requests auto-fetch {{adminAccessToken}} (dinasari1 / kelompok2dev).\n4. IoT folder auto-fetches client_credentials token (Node-RED S1 flow).\n5. Manual Auth requests remain available for debugging.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -10,16 +10,55 @@
       "script": {
         "type": "text/javascript",
         "exec": [
-          "const saveTokenResponse = (json) => {",
+          "const saveTokenResponse = (json, prefix = '') => {",
+          "    const accessKey = prefix ? `${prefix}AccessToken` : 'accessToken';",
+          "    const refreshKey = prefix ? `${prefix}RefreshToken` : 'refreshToken';",
+          "    const expiresKey = prefix ? `${prefix}AccessTokenExpiresAt` : 'accessTokenExpiresAt';",
+          "    const grantKey = prefix ? `${prefix}AccessTokenGrantType` : 'accessTokenGrantType';",
           "    if (json.access_token) {",
-          "        pm.collectionVariables.set('accessToken', json.access_token);",
+          "        pm.collectionVariables.set(accessKey, json.access_token);",
           "    }",
           "    if (json.refresh_token) {",
-          "        pm.collectionVariables.set('refreshToken', json.refresh_token);",
+          "        pm.collectionVariables.set(refreshKey, json.refresh_token);",
           "    }",
-          "    pm.collectionVariables.set('accessTokenGrantType', 'password');",
+          "    pm.collectionVariables.set(grantKey, 'password');",
           "    const ttl = Number(json.expires_in || 3600);",
-          "    pm.collectionVariables.set('accessTokenExpiresAt', String(Date.now() + ttl * 1000));",
+          "    pm.collectionVariables.set(expiresKey, String(Date.now() + ttl * 1000));",
+          "};",
+          "",
+          "const clearTokenVars = (prefix = '') => {",
+          "    const accessKey = prefix ? `${prefix}AccessToken` : 'accessToken';",
+          "    const refreshKey = prefix ? `${prefix}RefreshToken` : 'refreshToken';",
+          "    const expiresKey = prefix ? `${prefix}AccessTokenExpiresAt` : 'accessTokenExpiresAt';",
+          "    const grantKey = prefix ? `${prefix}AccessTokenGrantType` : 'accessTokenGrantType';",
+          "    pm.collectionVariables.unset(accessKey);",
+          "    pm.collectionVariables.unset(refreshKey);",
+          "    pm.collectionVariables.set(expiresKey, '0');",
+          "    pm.collectionVariables.unset(grantKey);",
+          "};",
+          "",
+          "const ADMIN_REQUESTS = new Set([",
+          "    'GET /api/citizens (admin)',",
+          "    'PATCH /api/reports/:id/status (admin)',",
+          "]);",
+          "",
+          "const isAdminRequest = () => ADMIN_REQUESTS.has(pm.info.requestName || '');",
+          "",
+          "const getAuthConfig = () => {",
+          "    if (isAdminRequest()) {",
+          "        return {",
+          "            prefix: 'admin',",
+          "            username: pm.collectionVariables.get('adminUsername'),",
+          "            password: pm.collectionVariables.get('adminPassword'),",
+          "            expectedGrant: 'password',",
+          "        };",
+          "    }",
+          "    return {",
+          "        prefix: '',",
+          "        username: pm.collectionVariables.get('devUsername'),",
+          "        password: pm.collectionVariables.get('devPassword'),",
+          "        expectedGrant: 'password',",
+          "    };",
           "};",
           "",
           "const shouldSkipAutoAuth = () => {",
@@ -30,24 +69,56 @@
           "    if (path.startsWith('/api/auth/login')) return true;",
           "    if (path.startsWith('/iot/')) return true;",
           "    if (name.startsWith('OAuth Token') || name === 'POST /api/auth/login') return true;",
-          "    if (name === 'Gateway Health' || name === 'GET /metrics') return true;",
+          "    if (name === 'Gateway Health' || name === 'GET /metrics' || name === 'Reset all tokens') return true;",
           "    return false;",
           "};",
           "",
-          "const tokenStillValid = () => {",
-          "    const token = pm.collectionVariables.get('accessToken');",
-          "    const expiresAt = Number(pm.collectionVariables.get('accessTokenExpiresAt') || '0');",
+          "const introspectToken = async (token) => {",
+          "    if (!token) return false;",
+          "    const baseUrl = pm.collectionVariables.get('baseUrl');",
+          "    const response = await pm.sendRequest({",
+          "        url: `${baseUrl}/oauth/introspect`,",
+          "        method: 'POST',",
+          "        header: { 'Content-Type': 'application/json' },",
+          "        body: {",
+          "            mode: 'raw',",
+          "            raw: JSON.stringify({",
+          "                token,",
+          "                client_id: pm.collectionVariables.get('gatewayClientId'),",
+          "                client_secret: pm.collectionVariables.get('gatewayClientSecret'),",
+          "            }),",
+          "        },",
+          "    });",
+          "    if (response.code !== 200) return false;",
+          "    return response.json().active === true;",
+          "};",
+          "",
+          "const tokenStillValid = async (prefix = '', expectedGrant = 'password') => {",
+          "    const accessKey = prefix ? `${prefix}AccessToken` : 'accessToken';",
+          "    const expiresKey = prefix ? `${prefix}AccessTokenExpiresAt` : 'accessTokenExpiresAt';",
+          "    const grantKey = prefix ? `${prefix}AccessTokenGrantType` : 'accessTokenGrantType';",
+          "    const token = pm.collectionVariables.get(accessKey);",
+          "    const expiresAt = Number(pm.collectionVariables.get(expiresKey) || '0');",
+          "    const grantType = pm.collectionVariables.get(grantKey) || '';",
           "    const skewMs = 60 * 1000;",
-          "    return Boolean(token) && expiresAt > 0 && Date.now() < expiresAt - skewMs;",
+          "    if (!token || expiresAt <= 0 || Date.now() >= expiresAt - skewMs) return false;",
+          "    if (grantType && grantType !== expectedGrant) return false;",
+          "    return introspectToken(token);",
           "};",
           "",
           "const ensurePasswordGrantToken = async () => {",
-          "    if (shouldSkipAutoAuth() || tokenStillValid()) {",
+          "    if (shouldSkipAutoAuth()) {",
+          "        return;",
+          "    }",
+          "",
+          "    const { prefix, username, password, expectedGrant } = getAuthConfig();",
+          "    if (await tokenStillValid(prefix, expectedGrant)) {",
           "        return;",
           "    }",
           "",
           "    const baseUrl = pm.collectionVariables.get('baseUrl');",
-          "    const refreshToken = pm.collectionVariables.get('refreshToken');",
+          "    const refreshKey = prefix ? `${prefix}RefreshToken` : 'refreshToken';",
+          "    const refreshToken = pm.collectionVariables.get(refreshKey);",
           "    let response;",
           "",
           "    if (refreshToken) {",
@@ -76,8 +147,8 @@
           "                mode: 'urlencoded',",
           "                urlencoded: [",
           "                    { key: 'grant_type', value: 'password' },",
-          "                    { key: 'username', value: pm.collectionVariables.get('devUsername') },",
-          "                    { key: 'password', value: pm.collectionVariables.get('devPassword') },",
+          "                    { key: 'username', value: username },",
+          "                    { key: 'password', value: password },",
           "                    { key: 'client_id', value: pm.collectionVariables.get('citizenClientId') },",
           "                    { key: 'client_secret', value: pm.collectionVariables.get('citizenClientSecret') },",
           "                ],",
@@ -86,13 +157,38 @@
           "    }",
           "",
           "    if (response.code !== 200) {",
-          "        throw new Error(`Auto OAuth failed (${response.code}): ${response.text()}`);",
+          "        const who = prefix === 'admin' ? 'admin (dinasari1)' : 'citizen (hadiputra2)';",
+          "        throw new Error(`Auto OAuth failed for ${who} (${response.code}): ${response.text()}`);",
           "    }",
           "",
-          "    saveTokenResponse(response.json());",
+          "    saveTokenResponse(response.json(), prefix);",
           "};",
           "",
           "await ensurePasswordGrantToken();"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.response.code !== 403) return;",
+          "let body = {};",
+          "try { body = pm.response.json(); } catch { return; }",
+          "if (body.message !== 'Token tidak valid') return;",
+          "const name = pm.info.requestName || '';",
+          "if (name.includes('(admin)')) {",
+          "    pm.collectionVariables.unset('adminAccessToken');",
+          "    pm.collectionVariables.unset('adminRefreshToken');",
+          "    pm.collectionVariables.set('adminAccessTokenExpiresAt', '0');",
+          "    pm.collectionVariables.unset('adminAccessTokenGrantType');",
+          "} else {",
+          "    pm.collectionVariables.unset('accessToken');",
+          "    pm.collectionVariables.unset('refreshToken');",
+          "    pm.collectionVariables.set('accessTokenExpiresAt', '0');",
+          "    pm.collectionVariables.unset('accessTokenGrantType');",
+          "}"
         ]
       }
     }
@@ -109,7 +205,15 @@
     { "key": "gatewayClientId", "value": "gateway" },
     { "key": "gatewayClientSecret", "value": "GatewaySecretDev123" },
     { "key": "devUsername", "value": "hadiputra2" },
-    { "key": "devPassword", "value": "kelompok2dev" }
+    { "key": "devPassword", "value": "kelompok2dev" },
+    { "key": "adminUsername", "value": "dinasari1" },
+    { "key": "adminPassword", "value": "kelompok2dev" },
+    { "key": "adminAccessToken", "value": "" },
+    { "key": "adminRefreshToken", "value": "" },
+    { "key": "adminAccessTokenExpiresAt", "value": "0" },
+    { "key": "adminAccessTokenGrantType", "value": "" },
+    { "key": "iotAccessToken", "value": "" },
+    { "key": "iotAccessTokenExpiresAt", "value": "0" }
   ],
   "item": [
     {
@@ -156,6 +260,46 @@
           }
         },
         {
+          "name": "OAuth Token (password grant — admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.access_token) {",
+                  "        pm.collectionVariables.set('adminAccessToken', json.access_token);",
+                  "    }",
+                  "    if (json.refresh_token) {",
+                  "        pm.collectionVariables.set('adminRefreshToken', json.refresh_token);",
+                  "    }",
+                  "    const ttl = Number(json.expires_in || 3600);",
+                  "    pm.collectionVariables.set('adminAccessTokenExpiresAt', String(Date.now() + ttl * 1000));",
+                  "    pm.collectionVariables.set('adminAccessTokenGrantType', 'password');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/x-www-form-urlencoded" }],
+            "url": "{{baseUrl}}/oauth/token",
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                { "key": "grant_type", "value": "password" },
+                { "key": "username", "value": "{{adminUsername}}" },
+                { "key": "password", "value": "{{adminPassword}}" },
+                { "key": "client_id", "value": "{{citizenClientId}}" },
+                { "key": "client_secret", "value": "{{citizenClientSecret}}" }
+              ]
+            }
+          }
+        },
+        {
           "name": "OAuth Token (client_credentials)",
           "event": [
             {
@@ -166,12 +310,10 @@
                   "if (pm.response.code === 200) {",
                   "    const json = pm.response.json();",
                   "    if (json.access_token) {",
-                  "        pm.collectionVariables.set('accessToken', json.access_token);",
+                  "        pm.collectionVariables.set('iotAccessToken', json.access_token);",
                   "    }",
-                  "    pm.collectionVariables.unset('refreshToken');",
                   "    const ttl = Number(json.expires_in || 3600);",
-                  "    pm.collectionVariables.set('accessTokenExpiresAt', String(Date.now() + ttl * 1000));",
-                  "    pm.collectionVariables.set('accessTokenGrantType', 'client_credentials');",
+                  "    pm.collectionVariables.set('iotAccessTokenExpiresAt', String(Date.now() + ttl * 1000));",
                   "}"
                 ]
               }
@@ -289,6 +431,30 @@
           }
         },
         {
+          "name": "Reset all tokens",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "['accessToken','refreshToken','accessTokenExpiresAt','accessTokenGrantType','adminAccessToken','adminRefreshToken','adminAccessTokenExpiresAt','adminAccessTokenGrantType','iotAccessToken','iotAccessTokenExpiresAt'].forEach((key) => {",
+                  "    if (key.endsWith('ExpiresAt')) {",
+                  "        pm.collectionVariables.set(key, '0');",
+                  "    } else {",
+                  "        pm.collectionVariables.unset(key);",
+                  "    }",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
           "name": "Gateway Health",
           "request": { "method": "GET", "url": "{{baseUrl}}/health" }
         },
@@ -302,10 +468,10 @@
       "name": "Citizen (php-user)",
       "item": [
         {
-          "name": "GET /api/citizens (alias)",
+          "name": "GET /api/citizens (admin)",
           "request": {
             "method": "GET",
-            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminAccessToken}}" }],
             "url": "{{baseUrl}}/api/citizens"
           }
         },
@@ -333,11 +499,11 @@
           }
         },
         {
-          "name": "PATCH /api/reports/:id/status",
+          "name": "PATCH /api/reports/:id/status (admin)",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Authorization", "value": "Bearer {{adminAccessToken}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/api/reports/1/status",
@@ -528,11 +694,10 @@
             "type": "text/javascript",
             "exec": [
               "const tokenStillValid = () => {",
-              "    const token = pm.collectionVariables.get('accessToken');",
-              "    const expiresAt = Number(pm.collectionVariables.get('accessTokenExpiresAt') || '0');",
-              "    const grantType = pm.collectionVariables.get('accessTokenGrantType') || '';",
+              "    const token = pm.collectionVariables.get('iotAccessToken');",
+              "    const expiresAt = Number(pm.collectionVariables.get('iotAccessTokenExpiresAt') || '0');",
               "    const skewMs = 60 * 1000;",
-              "    return grantType === 'client_credentials' && Boolean(token) && expiresAt > 0 && Date.now() < expiresAt - skewMs;",
+              "    return Boolean(token) && expiresAt > 0 && Date.now() < expiresAt - skewMs;",
               "};",
               "",
               "const ensureClientCredentialsToken = async () => {",
@@ -560,11 +725,9 @@
               "    }",
               "",
               "    const json = response.json();",
-              "    pm.collectionVariables.set('accessToken', json.access_token);",
-              "    pm.collectionVariables.unset('refreshToken');",
-              "    pm.collectionVariables.set('accessTokenGrantType', 'client_credentials');",
+              "    pm.collectionVariables.set('iotAccessToken', json.access_token);",
               "    const ttl = Number(json.expires_in || 3600);",
-              "    pm.collectionVariables.set('accessTokenExpiresAt', String(Date.now() + ttl * 1000));",
+              "    pm.collectionVariables.set('iotAccessTokenExpiresAt', String(Date.now() + ttl * 1000));",
               "};",
               "",
               "await ensureClientCredentialsToken();"
@@ -578,7 +741,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Authorization", "value": "Bearer {{iotAccessToken}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/iot/traffic",
@@ -593,7 +756,7 @@
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{accessToken}}" },
+              { "key": "Authorization", "value": "Bearer {{iotAccessToken}}" },
               { "key": "Content-Type", "value": "application/json" }
             ],
             "url": "{{baseUrl}}/iot/air",
