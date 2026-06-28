@@ -1,27 +1,49 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import r2_score
+"""Train rainfall category classifier (spec: Accuracy >= 70%)."""
+
+import sys
+from pathlib import Path
+
 import joblib
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_val_score, train_test_split
 
-df = pd.read_csv("data/data_finish.csv")
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
 
-kolom = ['Tn', 'Tx', 'Tavg', 'RH_avg', 'ss', 'ff_x', 'ddd_x', 'ff_avg', 'RR']
-df = df.dropna(subset=kolom)
+from rainfall_pipeline import CV_FOLDS, RANDOM_STATE, prepare_training_frame, train_rainfall_bundle
 
-df_sample = df.sample(frac=1.0, random_state=42)
+DATA_PATH = ROOT / "data" / "data_finish.csv"
+MODEL_PATH = ROOT / "models" / "prediksi_curah_hujan.pkl"
 
-x = df_sample[['Tn', 'Tx', 'Tavg', 'RH_avg', 'ss', 'ff_x', 'ddd_x', 'ff_avg']]
-y = df_sample['RR']
 
-x_train, x_test, y_train, y_test = train_test_split(
-    x, y, test_size=0.2, random_state=42
-)
+def main() -> None:
+    df = prepare_training_frame(str(DATA_PATH))
+    bundle = train_rainfall_bundle(str(DATA_PATH))
 
-model = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=-1)
-model.fit(x_train, y_train)
+    x = df[bundle["features"]]
+    y = df["category_id"]
+    x_train, x_test, y_train, y_test = train_test_split(
+        x, y, test_size=0.2, random_state=RANDOM_STATE, stratify=y
+    )
 
-y_pred = model.predict(x_test)
-print(f"Prediksi curah hujan: {r2_score(y_test, y_pred):.4f}")
-joblib.dump(model, "models/prediksi_curah_hujan.pkl")
-print("Model tersimpan di dalam prediksi_curah_hujan.pkl")
+    cv_scores = cross_val_score(
+        bundle["classifier"],
+        x_train,
+        y_train,
+        cv=CV_FOLDS,
+        scoring="accuracy",
+        n_jobs=-1,
+    )
+    test_acc = accuracy_score(y_test, bundle["classifier"].predict(x_test))
+
+    MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(bundle, MODEL_PATH)
+
+    print(f"Cross-validation Accuracy ({CV_FOLDS}-fold): {cv_scores.mean() * 100:.2f}%")
+    print(f"Hold-out test Accuracy: {test_acc * 100:.2f}%")
+    print(f"Status spesifikasi (>=70%): {'LULUS' if cv_scores.mean() >= 0.70 else 'PERLU TUNING'}")
+    print(f"Model tersimpan -> {MODEL_PATH}")
+
+
+if __name__ == "__main__":
+    main()
