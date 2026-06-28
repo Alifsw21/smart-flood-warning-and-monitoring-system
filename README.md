@@ -681,12 +681,3 @@ make seed           # regenerasi seed.sql
 make migrate        # migrasi DB lama
 make build-images   # image untuk Kubernetes
 ```
-
----
-
-## Referensi
-
-- Spesifikasi lengkap: `Tugas Besar Orientasi Service.md` (folder parent `final-project/`)
-- Diagram arsitektur: [`docs/architecture.md`](docs/architecture.md)
-- IoT: [`iot/README.md`](iot/README.md)
-- Audit guideline internal: `PROJECT-AUDIT-GUIDELINE.md`
