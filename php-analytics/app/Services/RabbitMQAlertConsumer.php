@@ -34,12 +34,14 @@ class RabbitMQAlertConsumer {
                     throw new \RuntimeException('Invalid alert payload');
                 }
                 $handler($payload);
+                $message->ack();
             } catch (\Throwable $e) {
                 error_log('Alert consumer error: ' . $e->getMessage());
+                $message->nack(false, true);
             }
         };
 
-        $this->channel->basic_consume(self::QUEUE, '', false, true, false, false, $callback);
+        $this->channel->basic_consume(self::QUEUE, '', false, false, false, false, $callback);
 
         echo "php-analytics alert consumer stand-by on anomaly.alert\n";
 
