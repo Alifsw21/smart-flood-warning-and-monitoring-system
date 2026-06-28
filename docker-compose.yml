@@ -62,6 +62,24 @@ services:
     networks:
       - smartcity-net
 
+  iot-simulator:
+    image: python:3.12-slim
+    container_name: smartcity-iot-simulator
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./iot:/app
+    command: ["sh", "-c", "pip install --no-cache-dir paho-mqtt && python simulator.py"]
+    environment:
+      MQTT_HOST: mosquitto
+      MQTT_PORT: 1883
+      MQTT_TOPIC_PREFIX: kelompok2/sensors
+      SIMULATOR_INTERVAL_SEC: 30
+    depends_on:
+      - mosquitto
+    networks:
+      - smartcity-net
+
   oauth-server:
     build: ./oauth-server
     container_name: smartcity-oauth
@@ -297,7 +315,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
       OAUTH_URL: http://oauth-server:3002
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
-      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-}
+      OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-GatewaySecretDev123}
       REDIS_HOST: redis
       REDIS_PORT: 6379
       REDIS_URL: redis://redis:6379
