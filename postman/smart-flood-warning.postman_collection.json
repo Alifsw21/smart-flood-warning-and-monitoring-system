@@ -26,7 +26,7 @@
                 { "key": "username", "value": "hadiputra2" },
                 { "key": "password", "value": "kelompok2dev" },
                 { "key": "client_id", "value": "citizen-app" },
-                { "key": "client_secret", "value": "citizen-secret-dev" }
+                { "key": "client_secret", "value": "CitizenSecretDev123" }
               ]
             }
           }
@@ -89,6 +89,14 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
             "url": "{{baseUrl}}/api/notifications"
+          }
+        },
+        {
+          "name": "GET /api/flood-history",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{accessToken}}" }],
+            "url": "{{baseUrl}}/api/flood-history"
           }
         }
       ]
