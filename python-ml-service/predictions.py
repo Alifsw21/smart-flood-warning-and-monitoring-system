@@ -10,7 +10,10 @@ MODELS_DIR = Path(__file__).resolve().parent / "models"
 _model_water_level = None
 _model_weather = None
 _model_rainfall = None
+_model_anomaly = None
 _load_error = None
+
+ANOMALY_FEATURES = ["sensor_value", "timestamp_hour", "rolling_mean_1h", "z_score"]
 
 WATER_LEVEL_FEATURES = ['curahHujan', 'tinggiAir', 'kelembapanTanah']
 WEATHER_FEATURES = ['suhuMin', 'suhuMax', 'suhuRataRata', 'kelembapanUdara', 'sunShine', 'kecepatanAngin', 'arahAngin', 'kecepatanRataRataAngin']
@@ -63,7 +66,7 @@ class BatchPredictRequest(BaseModel):
 
 
 def load_models():
-    global _model_water_level, _model_weather, _model_rainfall, _load_error
+    global _model_water_level, _model_weather, _model_rainfall, _model_anomaly, _load_error
 
     if _model_water_level is not None:
         return
@@ -72,6 +75,8 @@ def load_models():
         _model_water_level = joblib.load(MODELS_DIR / "deteksi_banjir_berdasarkan_waterLevel.pkl")
         _model_weather = joblib.load(MODELS_DIR / "deteksi_banjir_berdasarkan_cuaca.pkl")
         _model_rainfall = joblib.load(MODELS_DIR / "prediksi_curah_hujan.pkl")
+        anomaly_path = MODELS_DIR / "deteksi_anomali.pkl"
+        _model_anomaly = joblib.load(anomaly_path) if anomaly_path.exists() else None
         _load_error = None
     except Exception as exc:
         _load_error = str(exc)
@@ -91,6 +96,8 @@ def loaded_model_names() -> list[str]:
         names.append("deteksi_banjir_berdasarkan_cuaca")
     if _model_rainfall is not None:
         names.append("prediksi_curah_hujan")
+    if _model_anomaly is not None:
+        names.append("deteksi_anomali")
     return names
 
 
@@ -175,12 +182,26 @@ def detect_anomaly(data: SensorAnomalyInput) -> dict:
     if not models_ready():
         raise RuntimeError(model_load_error() or "ML models are not loaded")
 
-    deviation = abs(data.sensor_value - data.rolling_mean_1h)
-    threshold = max(1.0, abs(data.rolling_mean_1h) * 0.35)
-    is_anom = abs(data.z_score) >= 2.0 or deviation >= threshold
-    anomaly_score = round(max(abs(data.z_score), deviation / max(threshold, 0.01)), 4)
+    if _model_anomaly is not None:
+        bundle = _model_anomaly
+        features = bundle["features"]
+        X = bundle["scaler"].transform([[
+            data.sensor_value,
+            data.timestamp_hour,
+            data.rolling_mean_1h,
+            data.z_score,
+        ]])
+        score = float(bundle["model"].score_samples(X)[0])
+        is_anom = score < -0.1
+        anomaly_score = round(-score, 4)
+    else:
+        deviation = abs(data.sensor_value - data.rolling_mean_1h)
+        threshold = max(1.0, abs(data.rolling_mean_1h) * 0.35)
+        is_anom = abs(data.z_score) >= 2.0 or deviation >= threshold
+        anomaly_score = round(max(abs(data.z_score), deviation / max(threshold, 0.01)), 4)
+        score = -anomaly_score
 
-    if anomaly_score >= 3:
+    if score < -0.3 or anomaly_score >= 3:
         severity = "Kritis"
     elif is_anom:
         severity = "Peringatan"
@@ -223,6 +244,7 @@ def feature_importance() -> dict:
             "traffic": _tree_feature_importance(_model_water_level, WATER_LEVEL_FEATURES),
             "air_quality": _tree_feature_importance(_model_weather, WEATHER_FEATURES),
             "rainfall": _tree_feature_importance(_model_rainfall, RAINFALL_FEATURES),
+            "anomaly": {name: 0.0 for name in ANOMALY_FEATURES},
         },
         "message": "Feature importance berhasil diambil",
         "service": "python-ml-service",

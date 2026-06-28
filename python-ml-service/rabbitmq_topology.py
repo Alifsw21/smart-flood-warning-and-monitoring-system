@@ -14,12 +14,18 @@ ROUTING_AIR_NEW = "air.new"
 ROUTING_TRAFFIC_NEW = "traffic.new"
 ROUTING_ANOMALY_ALERT = "anomaly.alert"
 ROUTING_REPORT_SUBMITTED = "report.submitted"
+# Fan-out queue for php-user S6 citizen notifications (same routing key as analytics queue).
+QUEUE_CITIZEN_ANOMALY_ALERT = "citizen.anomaly.alert"
 
 EVENT_QUEUES = (
     ROUTING_AIR_NEW,
     ROUTING_TRAFFIC_NEW,
     ROUTING_ANOMALY_ALERT,
     ROUTING_REPORT_SUBMITTED,
+)
+
+EVENT_FANOUT_BINDINGS = (
+    (QUEUE_CITIZEN_ANOMALY_ALERT, ROUTING_ANOMALY_ALERT),
 )
 
 
@@ -51,6 +57,13 @@ def setup_events_topology(channel: pika.channel.Channel) -> None:
             queue=queue_name,
             exchange=CITY_EVENTS_EXCHANGE,
             routing_key=queue_name,
+        )
+    for queue_name, routing_key in EVENT_FANOUT_BINDINGS:
+        channel.queue_declare(queue=queue_name, durable=True)
+        channel.queue_bind(
+            queue=queue_name,
+            exchange=CITY_EVENTS_EXCHANGE,
+            routing_key=routing_key,
         )
 
 

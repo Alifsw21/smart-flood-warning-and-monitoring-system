@@ -69,13 +69,15 @@ def callback(ch, method, properties, body):
             f"Berhasil memproses data. Status: {prediksi} "
             f"(Probabilitas: {round(rata_prob * 100, 1)}%) — alert published"
         )
+        ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         print(f"Gagal memproses pesan: {str(e)}")
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 
 channel.basic_consume(
     queue=ROUTING_TRAFFIC_NEW,
     on_message_callback=callback,
-    auto_ack=True,
+    auto_ack=False,
 )
 channel.start_consuming()
