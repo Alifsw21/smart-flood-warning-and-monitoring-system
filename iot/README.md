@@ -54,7 +54,7 @@ mosquitto_pub -h localhost -p 1886 -t kelompok2/sensors/cuaca \
 | **Wokwi** (dev) | `broker.hivemq.com` publik | Prototype firmware di `Sensor Air/`, `Sensor suhu dan cuaca/` |
 | **Compose / server** | `mosquitto:1883` (service `mosquitto`) | S1, demo, course server |
 
-Untuk deploy: set `IS_DEPLOYED = true` di firmware dan isi `secrets.h` (MQTT host, user, pass). Di compose, broker = hostname `mosquitto`.
+Untuk deploy: set `IS_DEPLOYED = true` di firmware dan isi `secrets.h` (MQTT host, user, pass). Node-RED di compose memakai broker dari env `IOT_MQTT_BROKER` (default `mosquitto`) — dipatch otomatis saat container start via `node-red-patch-mqtt.js`.
 
 ## OAuth & secrets
 
@@ -104,12 +104,14 @@ IOT_MQTT_BROKER=broker.hivemq.com
 IOT_MQTT_PORT=1883
 ```
 
-Lalu restart Node-RED:
+Lalu restart Node-RED (entrypoint mem-patch `flows.json` dari env saat start):
 
 ```bash
 docker compose up -d node-red
 # atau: docker compose restart node-red
 ```
+
+Jangan hardcode broker di `flows.json` — nilai di file hanya default; runtime mengikuti `IOT_MQTT_BROKER`.
 
 Cek di log Node-RED harus ada koneksi ke `broker.hivemq.com`, bukan `mosquitto`:
 
@@ -156,7 +158,7 @@ Flow merge menunggu **sungai** dan **cuaca** berpasangan. Hanya satu topik → t
 
 Opsi A — pakai simulator Python (disarankan untuk compose).
 
-Opsi B — firmware deploy: `IS_DEPLOYED=true`, `secrets.h` dengan host IP mesin (`localhost` tidak bisa dari Wokwi; pakai IP LAN atau server kursus).
+Opsi B — firmware deploy: `IS_DEPLOYED=true`, `secrets.h` dengan host IP server (`SECRET_MQTT_SERVER_PUB`), kredensial `iot_device`/`iot_secret`, dan **pastikan** `.env` memakai `IOT_MQTT_BROKER=mosquitto` (default) agar Node-RED subscribe ke broker yang sama.
 
 Opsi C — tetap HiveMQ untuk Wokwi saja; itu terpisah dari stack Docker compose.
 
