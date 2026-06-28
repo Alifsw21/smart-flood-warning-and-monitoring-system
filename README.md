@@ -74,7 +74,7 @@ Sensor IoT / Simulator
 | Python | 3.11+ | Opsional — training model lokal |
 | kubectl | — | Opsional — deploy Kubernetes |
 
-**Port host yang dipakai (server lab kelompok 2):** `3530`, `3532`, `5012`, `5674`, `8150`, `8151`, `8154`, `1890`, `1883`, `3352`, `6382`, `9092`, `3014`, `8082`, `15674`.
+**Port host yang dipakai (server lab kelompok 2):** `3530`, `3532`, `5012`, `5674`, `8150`, `8151`, `8154`, `1890`, `1886`, `3352`, `6382`, `9092`, `3014`, `8082`, `15674`.
 
 ---
 
@@ -199,7 +199,7 @@ smart-flood-warning-and-monitoring-system/
 | **MySQL** | `smartcity-mysql` | **3352** | Database `kelompok2` |
 | **RabbitMQ** | `smartcity-rabbitmq` | **5674** / UI **15674** | Message broker |
 | **Redis** | `smartcity-redis` | **6382** | Rate limiting gateway |
-| **Mosquitto** | `smartcity-mosquitto` | **1883** | Broker MQTT |
+| **Mosquitto** | `smartcity-mosquitto` | **1886** | Broker MQTT (host); internal `mosquitto:1883` |
 | **Node-RED** | `smartcity-node-red` | **1890** | Bridge MQTT → REST |
 | **iot-simulator** | `smartcity-iot-simulator` | — | Publish sensor periodik |
 | **Prometheus** | `smartcity-prometheus` | **9092** | Metrik |
@@ -261,6 +261,8 @@ Salin `.env.example` → `.env`. Variabel penting:
 | `OAUTH_CLIENT_SECRET` | `GatewaySecretDev123` | **Wajib diisi** agar gateway bisa introspect token |
 | `RABBITMQ_USER` / `RABBITMQ_PASSWORD` | `smartcity` / `RabbitSecret` | Koneksi RabbitMQ |
 | `MQTT_TOPIC_PREFIX` | `kelompok2/sensors` | Prefix topik MQTT kelompok 2 |
+| `OAUTH_LOGIN_URL` | `http://localhost:3532/api/auth/login` | OAuth dari host (sesuai port host OAuth di `docker-compose.yml`) |
+| `IOT_MQTT_BROKER` / `IOT_MQTT_PORT` | `mosquitto` / `1883` | Broker MQTT untuk Node-RED (ganti ke `broker.hivemq.com` untuk Wokwi) |
 
 Setiap sub-layanan juga punya `.env.example` sendiri untuk pengembangan di luar Docker.
 
@@ -309,7 +311,7 @@ make seed   # menjalankan database/generateSeed.py
 
 ## 9. Autentikasi OAuth 2.0 & JWT
 
-**oauth-server** (`:3531`) mengimplementasikan:
+**oauth-server** (host **:3532**, internal container `:3531`) mengimplementasikan:
 
 | Grant type | Endpoint | Kegunaan |
 |------------|----------|----------|
@@ -440,7 +442,7 @@ bash iot/tests/s1-e2e.sh
 
 | Mode | Broker MQTT |
 |------|-------------|
-| Docker Compose | `mosquitto` (localhost:1883) |
+| Docker Compose | `mosquitto` (host `localhost:1886`, internal `mosquitto:1883`) |
 | Wokwi online | `broker.hivemq.com` (atur di firmware) |
 
 ---
@@ -578,12 +580,15 @@ Sesuai spesifikasi server lab:
 
 ```bash
 ssh -p 8989 mahasiswa@103.147.92.134
-cd /home/mahasiswa/kelompok2/   # sesuaikan nomor kelompok
+cd ~/Kelompok2A_SmartFloodDetection   # atau folder kelompok Anda
 
-git clone <url-repo> .
+git clone https://github.com/Alifsw21/smart-flood-warning-and-monitoring-system.git .  # jika belum ada
+git pull origin main
 cp .env.example .env
-nano .env                        # isi JWT_SECRET, password DB, dll.
+nano .env                        # pastikan OAUTH_CLIENT_SECRET=GatewaySecretDev123
 
+docker compose down
+docker rm -f $(docker ps -aq --filter name=smartcity) 2>/dev/null
 docker compose up -d --build
 docker compose ps
 curl http://localhost:3530/health
