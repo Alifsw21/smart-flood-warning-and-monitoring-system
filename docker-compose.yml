@@ -336,6 +336,9 @@ services:
       - "1890:1890"
     volumes:
       - ./iot/node-red-data:/data
+      - ./iot/node-red-patch-mqtt.js:/opt/node-red-patch-mqtt.js:ro
+      - ./iot/node-red-entrypoint.sh:/docker-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
     environment:
       PORT: 1890
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
