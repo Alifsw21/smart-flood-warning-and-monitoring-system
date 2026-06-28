@@ -2,8 +2,8 @@
 # Smoke checks for Prometheus + Grafana (spec §11.1 monitoring bonus panels).
 set -euo pipefail
 
-PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9090}"
-GRAFANA_URL="${GRAFANA_URL:-http://localhost:3001}"
+PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9092}"
+GRAFANA_URL="${GRAFANA_URL:-http://localhost:3014}"
 GATEWAY_URL="${GATEWAY_URL:-http://localhost:3530}"
 
 pass=0

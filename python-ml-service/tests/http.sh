@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SERVICE_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-BASE_URL="${ML_URL:-http://localhost:5010}"
+BASE_URL="${ML_URL:-http://localhost:5012}"
 
 pass=0
 fail=0

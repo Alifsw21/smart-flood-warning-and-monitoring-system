@@ -2,7 +2,7 @@
 set -euo pipefail
 
 GATEWAY="${GATEWAY_URL:-http://localhost:3530}"
-ML="${ML_URL:-http://localhost:5010}"
+ML="${ML_URL:-http://localhost:5012}"
 CITIZEN_SECRET="${CITIZEN_CLIENT_SECRET:-CitizenSecretDev123}"
 BANJIR_BODY='{"idSungai":1,"curahHujan":12,"tinggiAir":2.5,"kelembapanTanah":60,"suhuMin":25,"suhuMax":32,"suhuRataRata":28,"kelembapanUdara":77,"sunShine":5,"kecepatanAngin":10,"arahAngin":180,"kecepatanRataRataAngin":8}'
 CURAH_BODY='{"idNode":1,"tinggiAir":1.2,"kelembapanTanah":55,"suhuMin":24,"suhuMax":31,"suhuRataRata":27,"kelembapanUdara":70,"sunShine":6,"kecepatanAngin":9,"arahAngin":90,"kecepatanRataRataAngin":7}'

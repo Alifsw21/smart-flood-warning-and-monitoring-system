@@ -5,7 +5,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 ML_DIR="$(cd "$DIR/../../python-ml-service" && pwd)"
 
 export MQTT_HOST="${MQTT_HOST:-localhost}"
-export MQTT_PORT="${MQTT_PORT:-1883}"
+export MQTT_PORT="${MQTT_PORT:-1886}"
 export MQTT_TOPIC_PREFIX="${MQTT_TOPIC_PREFIX:-kelompok2/sensors}"
 export MYSQL_HOST="${MYSQL_HOST:-127.0.0.1}"
 export MYSQL_PORT="${MYSQL_PORT:-3350}"
