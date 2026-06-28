@@ -17,7 +17,7 @@ $dbInstance = new Database();
 $db = $dbInstance->getConnection();
 
 $requestHeaders = function_exists('getallheaders') ? array_change_key_case(getallheaders(), CASE_LOWER) : [];
-$userRole = $requestHeaders['x-user-role'] ?? 'pengguna';
+$userRole = $requestHeaders['x-user-role'] ?? 'user';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 $path = '/' . trim($requestPath, '/');

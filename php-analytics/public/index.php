@@ -2,22 +2,7 @@
 header('Content-Type: application/json');
 date_default_timezone_set('Asia/Jakarta');
 
-spl_autoload_register(function ($class) {
-    $prefix = 'App\\';
-    $baseDir = dirname(__DIR__) . '/app/';
-    $len = strlen($prefix);
-
-    if (strncmp($prefix, $class, $len) !== 0) {
-        return;
-    }
-
-    $relativeClass = substr($class, $len);
-    $file = $baseDir . str_replace('\\', '/', $relativeClass) . '.php';
-
-    if (file_exists($file)) {
-        require_once $file;
-    }
-});
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use App\Controllers\PeringatanController;
 use App\Models\PeringatanModel;
