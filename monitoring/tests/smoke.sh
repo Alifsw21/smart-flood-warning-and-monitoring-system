@@ -22,7 +22,8 @@ assert_ok() {
 }
 
 assert_metrics() {
-  curl -sf "${GATEWAY_URL}/metrics" | grep -q 'gateway_http_requests_total'
+  curl -sf "${GATEWAY_URL}/metrics" -o /tmp/gateway-metrics.txt
+  grep -q 'gateway_http_requests_total' /tmp/gateway-metrics.txt
 }
 
 query_request_rate() {

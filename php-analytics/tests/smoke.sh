@@ -143,7 +143,12 @@ assert_node "GET /api/environment/alerts status=success" "$alerts_body" "const d
 assert_node "GET /api/environment/alerts excludes normal" "$alerts_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); process.exit(d.data.every(r=>r.tipePeringatan==='waspada'||r.tipePeringatan==='bencana')?0:1)"
 assert_node "GET /api/environment/alerts has at least 9 active rows" "$alerts_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); process.exit(d.data.length>=9?0:1)"
 
-# --- admin delete (use seed id 14 = normal) ---
+# --- admin delete (use seed id 14 = normal; re-insert if a prior run deleted it) ---
+docker exec -i smartcity-mysql mysql -uroot -pRootSecret kelompok2 2>/dev/null <<'SQL' || true
+INSERT IGNORE INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES
+(14, 3, 'normal', 0.22, '2026-06-26 15:20:00');
+SQL
+
 assert_eq "DELETE without admin role 403" "$(curl -sS -m 10 -o /dev/null -w "%{http_code}" -X DELETE "${BASE}/api/analytics/peringatan/14")" "403"
 del_code="$(curl -sS -m 10 -o /tmp/php-analytics-del.json -w "%{http_code}" -X DELETE "${BASE}/api/analytics/peringatan/14" -H "X-User-Role: admin")"
 del_body="$(cat /tmp/php-analytics-del.json)"
@@ -166,6 +171,11 @@ if [ "$gw_health" = "200" ] || [ "$gw_health" = "503" ]; then
   assert_eq "gateway POST /api/environment/readings still routes to php-river" "$gw_env_post" "400"
 
   assert_eq "gateway DELETE peringatan as user 403" "$(curl -sS -m 10 -o /dev/null -w "%{http_code}" -X DELETE "${GATEWAY}/api/analytics/peringatan/9" -H "Authorization: Bearer ${USER_TOKEN}")" "403"
+
+  docker exec -i smartcity-mysql mysql -uroot -pRootSecret kelompok2 2>/dev/null <<'SQL' || true
+INSERT IGNORE INTO analytics_peringatan (id, idSungai, tipePeringatan, nilaiProbabilitas, recorded_at) VALUES
+(9, 1, 'normal', 0.15, '2026-06-25 07:30:00');
+SQL
 
   gw_del="$(curl -sS -m 10 -o /dev/null -w "%{http_code}" -X DELETE "${GATEWAY}/api/analytics/peringatan/9" -H "Authorization: Bearer ${ADMIN_TOKEN}")"
   assert_eq "gateway DELETE peringatan as admin 200" "$gw_del" "200"

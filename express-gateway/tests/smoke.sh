@@ -54,6 +54,7 @@ assert_status POST /detect/anomaly 200 "POST /detect/anomaly via gateway" -H "Au
 assert_status GET /model/feature-importance 200 "GET /model/feature-importance via gateway" -H "Authorization: Bearer ${USER_TOKEN}"
 assert_status POST /predict/batch 200 "POST /predict/batch via gateway" -H "Authorization: Bearer ${USER_TOKEN}" -H "Content-Type: application/json" -d "$BATCH_BODY"
 assert_status GET /api/notifications 200 "GET /api/notifications via gateway" -H "Authorization: Bearer ${USER_TOKEN}"
+assert_status GET /api/flood-history 200 "GET /api/flood-history via gateway" -H "Authorization: Bearer ${USER_TOKEN}"
 assert_status GET /api/citizens 403 "GET /api/citizens alias as user returns 403" -H "Authorization: Bearer ${USER_TOKEN}"
 assert_status GET /api/citizens 200 "GET /api/citizens alias as admin" -H "Authorization: Bearer ${ADMIN_TOKEN}"
 assert_status POST /iot/traffic 201 "POST /iot/traffic IoT ingress" -H "Authorization: Bearer ${ADMIN_TOKEN}" -H "Content-Type: application/json" -d "$IOT_BODY"

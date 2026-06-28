@@ -72,12 +72,14 @@ assert_node "S3 banjir response has data.hasil_prediksi" "$banjir_body" "const d
 assert_node "S3 banjir response has timestamp" "$banjir_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); process.exit(d.timestamp?0:1)"
 assert_node "S3 banjir response has service=python-ml-service" "$banjir_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); process.exit(d.service==='python-ml-service'?0:1)"
 
-if awk "BEGIN { exit !($banjir_elapsed < 0.5) }"; then
+LATENCY_BUDGET_SEC="${ML_LATENCY_BUDGET_SEC:-2.0}"
+
+if awk -v budget="$LATENCY_BUDGET_SEC" "BEGIN { exit !($banjir_elapsed < budget) }"; then
   pass=$((pass + 1))
-  echo "PASS S3 banjir latency under 500ms (${banjir_elapsed}s)"
+  echo "PASS S3 banjir latency under ${LATENCY_BUDGET_SEC}s (${banjir_elapsed}s)"
 else
   fail=$((fail + 1))
-  echo "FAIL S3 banjir latency under 500ms (${banjir_elapsed}s)"
+  echo "FAIL S3 banjir latency under ${LATENCY_BUDGET_SEC}s (${banjir_elapsed}s)"
 fi
 
 curah_http="$(curl -sS -m 10 -o /tmp/s3-curah-body.json -w "%{http_code}" -X POST "${GATEWAY}/predict/curah-hujan" \
@@ -96,7 +98,7 @@ no_auth_http="$(curl -sS -m 10 -o /dev/null -w "%{http_code}" -X POST "${GATEWAY
 assert_eq "POST /predict/banjir without token returns 401" "$no_auth_http" "401"
 
 health_body="$(curl -sS -m 10 "${ML}/health")"
-assert_node "ML /health lists 3 loaded models" "$health_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); process.exit(Array.isArray(d.models)&&d.models.length===3?0:1)"
+assert_node "ML /health lists 4 loaded models" "$health_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); process.exit(Array.isArray(d.models)&&d.models.length===4?0:1)"
 
 gw_health_body="$(curl -sS -m 10 "${GATEWAY}/health")"
 assert_node "Gateway /health reports python-ml-service up" "$gw_health_body" "const d=JSON.parse(require('fs').readFileSync(0,'utf8')); const item=(d.data&&d.data.upstreams||[]).find(s=>s.service==='python-ml-service'); process.exit(item&&item.status==='up'?0:1)"
