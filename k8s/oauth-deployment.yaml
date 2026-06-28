@@ -9,8 +9,8 @@ metadata:
     tier: auth
 spec:
   ports:
-    - port: 3002
-      targetPort: 3002
+    - port: 3531
+      targetPort: 3531
       name: http
   selector:
     app: oauth-server
@@ -39,11 +39,11 @@ spec:
           image: smartcity/oauth-server:latest
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 3002
+            - containerPort: 3531
               name: http
           env:
             - name: PORT
-              value: "3002"
+              value: "3531"
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
@@ -77,13 +77,13 @@ spec:
           readinessProbe:
             httpGet:
               path: /health
-              port: 3002
+              port: 3531
             initialDelaySeconds: 10
             periodSeconds: 5
           livenessProbe:
             httpGet:
               path: /health
-              port: 3002
+              port: 3531
             initialDelaySeconds: 30
             periodSeconds: 10
           resources:

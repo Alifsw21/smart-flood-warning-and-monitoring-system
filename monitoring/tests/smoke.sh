@@ -4,7 +4,7 @@ set -euo pipefail
 
 PROMETHEUS_URL="${PROMETHEUS_URL:-http://localhost:9090}"
 GRAFANA_URL="${GRAFANA_URL:-http://localhost:3001}"
-GATEWAY_URL="${GATEWAY_URL:-http://localhost:3000}"
+GATEWAY_URL="${GATEWAY_URL:-http://localhost:3530}"
 
 pass=0
 fail=0

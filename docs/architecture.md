@@ -13,28 +13,28 @@ flowchart TB
   subgraph IoT["Lapisan IoT"]
     SIM[iot-simulator / Wokwi ESP32]
     MQTT[(Mosquitto MQTT :1883)]
-    NR[Node-RED :1880]
+    NR[Node-RED :1890]
   end
 
   subgraph Gateway["Lapisan Gateway"]
-    GW[express-gateway :3000]
-    OAUTH[oauth-server :3002]
+    GW[express-gateway :3530]
+    OAUTH[oauth-server :3531]
   end
 
   subgraph Services["Layanan PHP (MVC)"]
-    USER[php-user :8000]
-    RIVER[php-river :8002]
-    ANALYTICS[php-analytics :8003]
+    USER[php-user :8150]
+    RIVER[php-river :8151]
+    ANALYTICS[php-analytics :8152]
   end
 
   subgraph ML["Lapisan Machine Learning"]
-    MLAPI[python-ml-service :5001]
+    MLAPI[python-ml-service :5010]
     MLAIR[consumer air.new]
     MLBANJIR[consumer traffic.new]
   end
 
   subgraph Data["Data & Messaging"]
-    MYSQL[(MySQL kelompok2 :3307)]
+    MYSQL[(MySQL kelompok2 :3350)]
     RMQ[(RabbitMQ city.events)]
     REDIS[(Redis :6379)]
   end
@@ -61,7 +61,7 @@ flowchart TB
   GW --> REDIS
 ```
 
-**Keterangan:** Port yang ditampilkan adalah **port host** saat menjalankan `docker compose up` di mesin lokal. Lalu lintas eksternal masuk melalui **API Gateway (:3000)**.
+**Keterangan:** Port yang ditampilkan adalah **port host** saat menjalankan `docker compose up` di mesin lokal. Lalu lintas eksternal masuk melalui **API Gateway (:3530)**.
 
 ---
 

@@ -228,8 +228,8 @@ metadata:
     app: node-red
 spec:
   ports:
-    - port: 1880
-      targetPort: 1880
+    - port: 1890
+      targetPort: 1890
       name: http
   selector:
     app: node-red
@@ -257,8 +257,10 @@ spec:
         - name: node-red
           image: nodered/node-red:3.1
           ports:
-            - containerPort: 1880
+            - containerPort: 1890
           env:
+            - name: PORT
+              value: "1890"
             - name: TZ
               value: Asia/Jakarta
           volumeMounts:

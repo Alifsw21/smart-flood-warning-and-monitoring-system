@@ -8,10 +8,10 @@ const { requestLogger } = require('./middleware/requestLogger');
 const { metricsHandler } = require('./middleware/metrics');
 const { gatewayError, proxyErrorHandler } = require('./middleware/errors');
 
-const PORT = Number(process.env.PORT || 3000);
+const PORT = Number(process.env.PORT || 3530);
 
 const upstreams = {
-  oauth: process.env.OAUTH_URL || 'http://oauth-server:3002',
+  oauth: process.env.OAUTH_URL || 'http://oauth-server:3531',
   user: process.env.PHP_USER_URL || 'http://php-user:80',
   river: process.env.PHP_RIVER_URL || 'http://php-river:80',
   analytics: process.env.PHP_ANALYTICS_URL || 'http://php-analytics:80',

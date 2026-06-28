@@ -76,7 +76,7 @@ Diagram lengkap (Mermaid): [`docs/architecture.md`](docs/architecture.md) — ek
 | Python | 3.11+ | Opsional — training model lokal |
 | kubectl | — | Opsional — deploy Kubernetes |
 
-**Port lokal yang harus bebas:** `3000`, `3002`, `5001`, `5672`, `8000`, `8002`, `8003`, `1880`, `1883`, `3307`, `9090`, `3001`.
+**Port lokal yang harus bebas:** `3530`, `3531`, `5010`, `5672`, `8150`, `8151`, `8152`, `1890`, `1883`, `3350`, `9090`, `3001`.
 
 ---
 
@@ -122,7 +122,7 @@ Pastikan status `running` / `healthy` untuk minimal: `mysql`, `rabbitmq`, `oauth
 Cek health gateway:
 
 ```bash
-curl -s http://localhost:3000/health | python3 -m json.tool
+curl -s http://localhost:3530/health | python3 -m json.tool
 ```
 
 Respons sukses: `"status": "success"` dan semua upstream `"status": "up"`.
@@ -130,7 +130,7 @@ Respons sukses: `"status": "success"` dan semua upstream `"status": "up"`.
 ### Langkah 5 — Dapatkan token OAuth (1 menit)
 
 ```bash
-curl -s -X POST http://localhost:3000/oauth/token \
+curl -s -X POST http://localhost:3530/oauth/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "username=hadiputra2" \
@@ -146,10 +146,10 @@ Salin nilai `access_token` dari respons JSON.
 ```bash
 export TOKEN="<access_token_dari_langkah_5>"
 
-curl -s http://localhost:3000/api/notifications \
+curl -s http://localhost:3530/api/notifications \
   -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 
-curl -s http://localhost:3000/api/environment/alerts \
+curl -s http://localhost:3530/api/environment/alerts \
   -H "Authorization: Bearer $TOKEN" | python3 -m json.tool
 ```
 
@@ -192,23 +192,23 @@ smart-flood-warning-and-monitoring-system/
 
 | Layanan | Container | Port host | Fungsi |
 |---------|-----------|-----------|--------|
-| **express-gateway** | `smartcity-gateway` | **3000** | Pintu masuk tunggal API |
-| **oauth-server** | `smartcity-oauth` | **3002** | `/oauth/token`, introspect, revoke |
-| **php-user** | `smartcity-php-user` | **8000** | Warga, laporan, notifikasi, riwayat banjir |
-| **php-river** | `smartcity-php-river` | **8002** | Zona, sungai, node sensor, pembacaan |
-| **php-analytics** | `smartcity-php-analytics` | **8003** | Peringatan (`analytics_peringatan`) |
-| **python-ml-service** | `smartcity-ml` | **5001** | Prediksi ML (FastAPI) |
-| **MySQL** | `smartcity-mysql` | **3307** | Database `kelompok2` |
+| **express-gateway** | `smartcity-gateway` | **3530** | Pintu masuk tunggal API |
+| **oauth-server** | `smartcity-oauth` | **3531** | `/oauth/token`, introspect, revoke |
+| **php-user** | `smartcity-php-user` | **8150** | Warga, laporan, notifikasi, riwayat banjir |
+| **php-river** | `smartcity-php-river` | **8151** | Zona, sungai, node sensor, pembacaan |
+| **php-analytics** | `smartcity-php-analytics` | **8152** | Peringatan (`analytics_peringatan`) |
+| **python-ml-service** | `smartcity-ml` | **5010** | Prediksi ML (FastAPI) |
+| **MySQL** | `smartcity-mysql` | **3350** | Database `kelompok2` |
 | **RabbitMQ** | `smartcity-rabbitmq` | **5672** / UI **15672** | Message broker |
 | **Redis** | `smartcity-redis` | **6379** | Rate limiting gateway |
 | **Mosquitto** | `smartcity-mosquitto` | **1883** | Broker MQTT |
-| **Node-RED** | `smartcity-node-red` | **1880** | Bridge MQTT → REST |
+| **Node-RED** | `smartcity-node-red` | **1890** | Bridge MQTT → REST |
 | **iot-simulator** | `smartcity-iot-simulator` | — | Publish sensor periodik |
 | **Prometheus** | `smartcity-prometheus` | **9090** | Metrik |
 | **Grafana** | `smartcity-grafana` | **3001** | Dashboard |
 | **cAdvisor** | `smartcity-cadvisor` | **8080** | Metrik container |
 
-> Akses API eksternal selalu melalui **Gateway :3000**, kecuali OAuth langsung (:3002) atau UI monitoring.
+> Akses API eksternal selalu melalui **Gateway :3530**, kecuali OAuth langsung (:3531) atau UI monitoring.
 
 **Worker (tanpa port publik):**
 
@@ -311,7 +311,7 @@ make seed   # menjalankan database/generateSeed.py
 
 ## 9. Autentikasi OAuth 2.0 & JWT
 
-**oauth-server** (`:3002`) mengimplementasikan:
+**oauth-server** (`:3531`) mengimplementasikan:
 
 | Grant type | Endpoint | Kegunaan |
 |------------|----------|----------|
@@ -326,7 +326,7 @@ Endpoint tambahan: `POST /oauth/introspect`, `POST /oauth/revoke`.
 ### Contoh: login warga
 
 ```bash
-curl -s -X POST http://localhost:3000/oauth/token \
+curl -s -X POST http://localhost:3530/oauth/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=password" \
   -d "username=hadiputra2" \
@@ -338,7 +338,7 @@ curl -s -X POST http://localhost:3000/oauth/token \
 ### Contoh: refresh token
 
 ```bash
-curl -s -X POST http://localhost:3000/oauth/token \
+curl -s -X POST http://localhost:3530/oauth/token \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=refresh_token" \
   -d "client_id=citizen-app" \
@@ -350,7 +350,7 @@ curl -s -X POST http://localhost:3000/oauth/token \
 
 ## 10. API Gateway & endpoint utama
 
-Base URL: `http://localhost:3000`
+Base URL: `http://localhost:3530`
 
 ### Publik (tanpa Bearer token)
 
@@ -428,7 +428,7 @@ Detail teknis: [`iot/README.md`](iot/README.md)
 
 1. `iot-simulator` (atau Wokwi ESP32) publish ke Mosquitto
 2. Node-RED subscribe → gabung payload → OAuth `client_credentials`
-3. `POST http://express-gateway:3000/iot/traffic`
+3. `POST http://express-gateway:3530/iot/traffic`
 4. php-river simpan ke MySQL → publish RabbitMQ
 5. python-ml-consumer memproses & prediksi
 
@@ -532,7 +532,7 @@ Manifest mencakup: namespace, ConfigMap, Secret, MySQL StatefulSet, RabbitMQ, Re
 | **S1** | IoT → MQTT → Node-RED → Gateway → PHP → RabbitMQ → ML | `bash iot/tests/s1-e2e.sh` |
 | **S2** | Login OAuth → submit laporan → notifikasi RabbitMQ | `bash express-gateway/tests/s2-report-e2e.sh` |
 | **S3** | Prediksi ML via gateway + rate limit | `bash express-gateway/tests/s3-ml-e2e.sh` |
-| **S4** | Docker Compose full stack | `make compose-up` + `curl localhost:3000/health` |
+| **S4** | Docker Compose full stack | `make compose-up` + `curl localhost:3530/health` |
 | **S5** | Kubernetes deploy + Ingress + HPA | `./k8s/deploy.sh` + `kubectl get hpa -n smartcity` |
 | **S6** | Anomali → RabbitMQ → notifikasi warga | Trigger prediksi waspada/bencana → cek `GET /api/notifications` |
 
@@ -566,7 +566,7 @@ make test-all
 ## 18. Postman
 
 1. Import `postman/smart-flood-warning.postman_collection.json`
-2. Set variabel `baseUrl` = `http://localhost:3000`
+2. Set variabel `baseUrl` = `http://localhost:3530`
 3. Jalankan request **OAuth Token (password grant)** terlebih dahulu
 4. Token otomatis dipakai request berikutnya via `{{accessToken}}`
 
@@ -588,10 +588,10 @@ nano .env                        # isi JWT_SECRET, password DB, dll.
 
 docker compose up -d --build
 docker compose ps
-curl http://localhost:3000/health
+curl http://localhost:3530/health
 ```
 
-**Port alokasi kelompok:** 3000 (Gateway), 3002 (OAuth), 8000–8003 (PHP), 5001 (ML).
+**Port alokasi kelompok:** 3530 (Gateway), 3531 (OAuth), 8150–8152 (PHP), 5010 (ML).
 
 **Aturan keamanan server:**
 - Jangan commit `.env` atau kredensial ke Git
@@ -648,7 +648,7 @@ docker compose up -d python-ml-service
 
 ### MySQL connection refused dari host
 
-Gunakan port **3307** (bukan 3306) saat koneksi dari luar container.
+Gunakan port **3350** (bukan 3306) saat koneksi dari luar container.
 
 ---
 

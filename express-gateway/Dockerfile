@@ -8,6 +8,6 @@ RUN npm ci --omit=dev
 
 COPY src ./src
 
-EXPOSE 3000
+EXPOSE 3530
 
 CMD ["npm", "start"]

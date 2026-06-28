@@ -7,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-RootSecret}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-kelompok2}
     ports:
-      - "3307:3306"
+      - "3350:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
@@ -88,7 +88,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      PORT: 3002
+      PORT: 3531
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
       DB_HOST: mysql
       DB_PORT: 3306
@@ -96,7 +96,7 @@ services:
       DB_PASSWORD: ${AUTH_DB_PASSWORD:-AuthSecret}
       DB_NAME: ${MYSQL_DATABASE:-kelompok2}
     ports:
-      - "3002:3002"
+      - "3531:3531"
     networks:
       - smartcity-net
 
@@ -112,7 +112,7 @@ services:
       rabbitmq:
         condition: service_healthy
     environment:
-      OAUTH_LOGIN_URL: http://oauth-server:3002/api/auth/login
+      OAUTH_LOGIN_URL: http://oauth-server:3531/api/auth/login
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: ${MYSQL_DATABASE:-kelompok2}
@@ -123,7 +123,7 @@ services:
       RABBITMQ_USER: ${RABBITMQ_USER:-smartcity}
       RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
     ports:
-      - "8000:80"
+      - "8150:80"
     networks:
       - smartcity-net
 
@@ -172,7 +172,7 @@ services:
       RABBITMQ_PASS: ${RABBITMQ_PASSWORD:-RabbitSecret}
       APP_DEBUG: "false"
     ports:
-      - "8002:80"
+      - "8151:80"
     networks:
       - smartcity-net
 
@@ -190,7 +190,7 @@ services:
       DB_USER: analytics
       DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
     ports:
-      - "8003:80"
+      - "8152:80"
     networks:
       - smartcity-net
 
@@ -247,7 +247,7 @@ services:
       ANALYTICS_DB_USER: analytics
       ANALYTICS_DB_PASSWORD: ${ANALYTICS_DB_PASSWORD:-AnalyticSecret}
     ports:
-      - "5001:8000"
+      - "5010:8000"
     networks:
       - smartcity-net
 
@@ -311,9 +311,9 @@ services:
       - php-analytics
       - python-ml-service
     environment:
-      PORT: 3000
+      PORT: 3530
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
-      OAUTH_URL: http://oauth-server:3002
+      OAUTH_URL: http://oauth-server:3531
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-GatewaySecretDev123}
       REDIS_HOST: redis
@@ -324,7 +324,7 @@ services:
       PHP_ANALYTICS_URL: http://php-analytics:80
       ML_URL: http://python-ml-service:8000
     ports:
-      - "3000:3000"
+      - "3530:3530"
     networks:
       - smartcity-net
 
@@ -333,10 +333,11 @@ services:
     container_name: smartcity-node-red
     restart: unless-stopped
     ports:
-      - "1880:1880"
+      - "1890:1890"
     volumes:
       - ./iot/node-red-data:/data
     environment:
+      PORT: 1890
       OAUTH_CLIENT_ID: ${OAUTH_CLIENT_ID:-gateway}
       OAUTH_CLIENT_SECRET: ${OAUTH_CLIENT_SECRET:-GatewaySecretDev123}
       IOT_MQTT_BROKER: ${IOT_MQTT_BROKER:-mosquitto}

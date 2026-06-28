@@ -12,8 +12,8 @@ data:
 
   # OAuth / Gateway
   OAUTH_CLIENT_ID: gateway
-  OAUTH_URL: http://oauth-server-svc:3002
-  OAUTH_LOGIN_URL: http://oauth-server-svc:3002/api/auth/login
+  OAUTH_URL: http://oauth-server-svc:3531
+  OAUTH_LOGIN_URL: http://oauth-server-svc:3531/api/auth/login
 
   # Upstream service URLs (ClusterIP DNS)
   PHP_USER_URL: http://php-user-svc:80
@@ -43,8 +43,8 @@ data:
   MQTT_TOPIC_PREFIX: kelompok2/sensors
 
   # Service ports
-  GATEWAY_PORT: "3000"
-  OAUTH_PORT: "3002"
+  GATEWAY_PORT: "3530"
+  OAUTH_PORT: "3531"
   ML_PORT: "8000"
 
   # DB users (passwords in Secret)

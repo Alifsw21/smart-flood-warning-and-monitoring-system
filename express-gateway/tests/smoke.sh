@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE_URL="${GATEWAY_URL:-http://localhost:3000}"
+BASE_URL="${GATEWAY_URL:-http://localhost:3530}"
 JWT_SECRET="${JWT_SECRET:-dev-jwt-secret-change-me}"
 GATEWAY_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 

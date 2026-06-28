@@ -5,8 +5,8 @@
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:3000" },
-    { "key": "oauthUrl", "value": "http://localhost:3002" },
+    { "key": "baseUrl", "value": "http://localhost:3530" },
+    { "key": "oauthUrl", "value": "http://localhost:3531" },
     { "key": "accessToken", "value": "" }
   ],
   "item": [

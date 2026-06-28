@@ -17,7 +17,7 @@ MQTT_PORT = int(os.environ.get("MQTT_PORT", "1883"))
 MQTT_TOPIC_PREFIX = os.environ.get("MQTT_TOPIC_PREFIX", "kelompok2/sensors").rstrip("/")
 
 MYSQL_HOST = os.environ.get("MYSQL_HOST", "127.0.0.1")
-MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3307"))
+MYSQL_PORT = int(os.environ.get("MYSQL_PORT", "3350"))
 MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "kelompok2")
 RIVER_DB_USER = os.environ.get("RIVER_DB_USER", "river")
 RIVER_DB_PASSWORD = os.environ.get("RIVER_DB_PASSWORD", "RiverSecret")

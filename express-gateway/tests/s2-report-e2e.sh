@@ -2,7 +2,7 @@
 # Spec §10 S2 — OAuth login -> submit laporan -> RabbitMQ report.submitted -> citizen notification
 set -euo pipefail
 
-GATEWAY="${GATEWAY_URL:-http://localhost:3000}"
+GATEWAY="${GATEWAY_URL:-http://localhost:3530}"
 CLIENT_ID="${OAUTH_CLIENT_ID:-citizen-app}"
 CLIENT_SECRET="${OAUTH_CLIENT_SECRET:-CitizenSecretDev123}"
 USERNAME="${OAUTH_USERNAME:-hadiputra2}"
