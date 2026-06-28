@@ -8,9 +8,7 @@ const char* ssid = "Wokwi-GUEST";
 const bool IS_DEPLOYED = false;
 
 const char* mqtt_server = IS_DEPLOYED ? SECRET_MQTT_SERVER_PUB : "broker.hivemq.com";
-const int mqtt_port = 1883;
-const char* mqtt_user = SECRET_MQTT_USER_2;
-const char* mqtt_pass = SECRET_MQTT_PASS_2;
+const int mqtt_port = IS_DEPLOYED ? 1886 : 1883;
 const char* DEVICE_ID = "Sensor-banjir-cuaca2";
 
 unsigned long lastMsg = 0;
@@ -72,9 +70,7 @@ void reconnect() {
     lastReconnectAttempt = now;
     Serial.print("Mencoba koneksi MQTT...");
 
-    bool success = IS_DEPLOYED ?
-                   client.connect(DEVICE_ID, mqtt_user, mqtt_pass) :
-                   client.connect(DEVICE_ID);
+    bool success = client.connect(DEVICE_ID);
     
     if (success) { 
       Serial.println("TERHUBUNG!");
