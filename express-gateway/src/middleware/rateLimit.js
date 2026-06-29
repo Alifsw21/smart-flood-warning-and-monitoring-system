@@ -18,17 +18,31 @@ const buildLimiter = (options, redisClient) => rateLimit({
 const createRateLimiters = async () => {
   let redisClient = null;
 
+  // Tetap pakai format URL dinamis bawaan kelompok agar otomatis membaca environment Docker
   const redisUrl = process.env.REDIS_URL || `redis://${process.env.REDIS_HOST || 'redis'}:${process.env.REDIS_PORT || 6379}`;
 
   try {
-    redisClient = createClient({ url: redisUrl });
+    redisClient = createClient({ 
+      url: redisUrl,
+      // Fitur proteksi dari Rakha: Membatasi retry biar ga looping error selamanya di lokal
+      socket: {
+        reconnectStrategy: (retries) => {
+          if (retries > 1) {
+            return new Error('Redis connection failed'); 
+          }
+          return 500; 
+        }
+      }
+    });
+
     redisClient.on('error', (error) => {
       console.error('Redis rate-limit client error:', error.message);
     });
+
     await redisClient.connect();
     console.log('Rate limiting backed by Redis');
   } catch (error) {
-    console.warn('Redis unavailable for rate limiting, using in-memory store:', error.message);
+    console.warn('⚠️ Redis unavailable for rate limiting, falling back to in-memory store:', error.message);
     redisClient = null;
   }
 
